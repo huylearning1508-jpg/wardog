@@ -1012,6 +1012,60 @@ function updateScopeOverlay(sol) {
     const mText = sol.weapon === 'sph2' ? `${sol.highMil} MIL` : `${sol.mils} MIL`;
     targetSummary.textContent = `MỤC TIÊU: ${sol.adjustedDistance.toFixed(0)}M · ${mText} · HƯỚNG ${sol.bearing.toFixed(1)}° (${sol.cardinal})`;
   }
+
+  // Live Sync to Picture-in-Picture window if active
+  if (currentPipWindow && !currentPipWindow.closed) {
+    syncPipWindow(sol);
+  }
+}
+
+// Global PiP Window State
+let currentPipWindow = null;
+let pipScale = 1.0;
+let pipOpacity = 0; // Default: 0% opacity (Hoàn toàn trong suốt - không viền đen)
+let pipHudVisible = true;
+
+function syncPipWindow(sol) {
+  if (!currentPipWindow || currentPipWindow.closed || !sol) return;
+  const doc = currentPipWindow.document;
+
+  const pipCanvas = doc.getElementById('scopeHeadingCanvas');
+  if (pipCanvas) drawScopeHeadingTape(sol.bearing, pipCanvas);
+
+  const centerBoxText = doc.getElementById('scopeHeadingCenterText');
+  if (centerBoxText) centerBoxText.textContent = `${Math.round(sol.bearing)} ${getCardinal(sol.bearing)}`;
+
+  if (sol.weapon === 'mortar') {
+    const leftTrack = doc.getElementById('scopeLadderTrackLeft');
+    const rightTrack = doc.getElementById('scopeLadderTrackRight');
+    const currentMil = sol.mils || (sol.adjustedDistance <= 80 ? 950 : 150);
+    const clampedMil = Math.max(150, Math.min(950, currentMil));
+    const translateY = (clampedMil - 950) * SCOPE_LADDER_PX_PER_MIL;
+
+    if (leftTrack) leftTrack.style.transform = `translateY(${translateY}px)`;
+    if (rightTrack) rightTrack.style.transform = `translateY(${translateY}px)`;
+
+    doc.querySelectorAll('.scope-ladder-row').forEach(row => {
+      const rowMil = parseFloat(row.dataset.mil);
+      const diff = Math.abs(rowMil - clampedMil);
+      row.classList.toggle('target-locked', diff <= 25);
+    });
+
+    const distText = doc.getElementById('scopeCenterDistText');
+    const milText = doc.getElementById('scopeCenterMilText');
+    if (distText) distText.textContent = `${Math.round(sol.adjustedDistance)}M`;
+    if (milText) milText.textContent = `${sol.mils || 150} MIL`;
+  }
+
+  const hudDist = doc.getElementById('scopeHudDist');
+  const hudMil = doc.getElementById('scopeHudMil');
+  const hudBearing = doc.getElementById('scopeHudBearing');
+  const hudToF = doc.getElementById('scopeHudToF');
+
+  if (hudDist) hudDist.textContent = `${sol.adjustedDistance.toFixed(1)} M`;
+  if (hudMil) hudMil.textContent = `${sol.mils || '---'} MIL`;
+  if (hudBearing) hudBearing.textContent = `${sol.bearing.toFixed(1)}°`;
+  if (hudToF) hudToF.textContent = `${sol.tof} S`;
 }
 
 function openScopeOverlay() {
@@ -1044,17 +1098,20 @@ async function toggleScopePictureInPicture() {
     return;
   }
 
-  if (window.documentPictureInPicture.window) {
-    window.documentPictureInPicture.window.close();
+  if (currentPipWindow && !currentPipWindow.closed) {
+    currentPipWindow.close();
+    currentPipWindow = null;
     return;
   }
 
   try {
     const pipWin = await window.documentPictureInPicture.requestWindow({
-      width: 700,
-      height: 560
+      width: 780,
+      height: 640
     });
+    currentPipWindow = pipWin;
 
+    // Copy all stylesheets from main document
     [...document.styleSheets].forEach(sheet => {
       try {
         const cssRules = [...sheet.cssRules].map(r => r.cssText).join('');
@@ -1069,25 +1126,192 @@ async function toggleScopePictureInPicture() {
       }
     });
 
+    // Body styling: 100% transparent by default (NO BLACK BOX)
+    pipWin.document.body.className = 'scope-fullscreen-overlay pip-active pip-no-bg';
     pipWin.document.body.style.margin = '0';
     pipWin.document.body.style.padding = '0';
-    pipWin.document.body.style.background = '#080d14';
+    pipWin.document.body.style.background = 'transparent';
+    pipWin.document.documentElement.style.background = 'transparent';
     pipWin.document.body.style.overflow = 'hidden';
 
+    // Clone Scope Stage
     const stageEl = document.getElementById('scopeStage');
-    if (stageEl) {
-      const clone = stageEl.cloneNode(true);
-      clone.style.height = '100vh';
-      clone.style.width = '100vw';
-      pipWin.document.body.appendChild(clone);
+    const stageHtml = stageEl ? stageEl.outerHTML : '';
 
-      const pipCanvas = clone.querySelector('#scopeHeadingCanvas');
-      if (pipCanvas && currentSolution) {
-        drawScopeHeadingTape(currentSolution.bearing, pipCanvas);
+    pipWin.document.body.innerHTML = `
+      <!-- FLOATING TOOLBAR -->
+      <div class="pip-toolbar" id="pipToolbar">
+        <div class="pip-tool-group">
+          <span class="pip-tool-label">🔍 Kích thước:</span>
+          <button class="pip-btn" id="pipZoomOutBtn" title="Thu nhỏ (Lăn chuột xuống)">➖</button>
+          <span class="pip-scale-val" id="pipScaleVal">100%</span>
+          <button class="pip-btn" id="pipZoomInBtn" title="Phóng to (Lăn chuột lên)">➕</button>
+          <button class="pip-btn pip-btn-sm" id="pipResetZoomBtn" title="Về 100%">1:1</button>
+        </div>
+
+        <div class="pip-tool-group">
+          <span class="pip-tool-label">🎨 Độ mờ nền:</span>
+          <input type="range" id="pipOpacityRange" min="0" max="100" value="0" step="5" class="pip-slider" title="Kéo về 0 để bỏ hoàn toàn viền đen" />
+          <span class="pip-opacity-val" id="pipOpacityVal">0% (Trong suốt)</span>
+        </div>
+
+        <div class="pip-tool-group">
+          <button class="pip-btn" id="pipToggleHudBtn" title="Ẩn/Hiện bảng thông số đáy">📊 HUD</button>
+          <button class="pip-btn pip-btn-close-tools" id="pipHideToolbarBtn" title="Thu gọn thanh này (Phím H)">✕ Thu gọn</button>
+        </div>
+      </div>
+
+      <!-- SHOW TOOLS PILL (WHEN TOOLBAR HIDDEN) -->
+      <button class="pip-show-tools-pill" id="pipShowToolsPill" style="display: none;">⚙️ Chỉnh kích thước & Độ mờ</button>
+
+      <!-- STAGE CONTAINER -->
+      <div class="pip-stage-wrap">
+        ${stageHtml}
+      </div>
+    `;
+
+    // Elements inside PiP
+    const pipToolbar = pipWin.document.getElementById('pipToolbar');
+    const pipShowPill = pipWin.document.getElementById('pipShowToolsPill');
+    const pipZoomInBtn = pipWin.document.getElementById('pipZoomInBtn');
+    const pipZoomOutBtn = pipWin.document.getElementById('pipZoomOutBtn');
+    const pipResetBtn = pipWin.document.getElementById('pipResetZoomBtn');
+    const pipScaleVal = pipWin.document.getElementById('pipScaleVal');
+    const pipOpacityRange = pipWin.document.getElementById('pipOpacityRange');
+    const pipOpacityVal = pipWin.document.getElementById('pipOpacityVal');
+    const pipToggleHudBtn = pipWin.document.getElementById('pipToggleHudBtn');
+    const pipHideToolbarBtn = pipWin.document.getElementById('pipHideToolbarBtn');
+    const pipAperture = pipWin.document.querySelector('.scope-aperture');
+
+    function updatePipScale() {
+      if (pipAperture) {
+        pipAperture.style.setProperty('--scope-scale', pipScale);
+      }
+      if (pipScaleVal) {
+        pipScaleVal.textContent = `${Math.round(pipScale * 100)}%`;
       }
     }
 
-    showToast('🖼️ Đã ghim thước ngắm Always-On-Top đè lên game!');
+    function setPipOpacity(val) {
+      pipOpacity = val;
+      const alpha = val / 100;
+      if (val === 0) {
+        pipWin.document.body.classList.add('pip-no-bg');
+        pipWin.document.body.style.background = 'transparent';
+        pipWin.document.documentElement.style.background = 'transparent';
+        if (pipOpacityVal) pipOpacityVal.textContent = '0% (Trong suốt)';
+      } else {
+        pipWin.document.body.classList.remove('pip-no-bg');
+        pipWin.document.body.style.background = `rgba(8, 13, 20, ${alpha})`;
+        pipWin.document.documentElement.style.background = `rgba(8, 13, 20, ${alpha})`;
+        if (pipOpacityVal) pipOpacityVal.textContent = `${val}%`;
+      }
+    }
+
+    // Apply initial scale & opacity (0% = fully transparent)
+    updatePipScale();
+    setPipOpacity(0);
+
+    // Zoom buttons
+    if (pipZoomInBtn) {
+      pipZoomInBtn.addEventListener('click', () => {
+        pipScale = Math.min(2.5, Math.round((pipScale + 0.1) * 100) / 100);
+        updatePipScale();
+      });
+    }
+
+    if (pipZoomOutBtn) {
+      pipZoomOutBtn.addEventListener('click', () => {
+        pipScale = Math.max(0.5, Math.round((pipScale - 0.1) * 100) / 100);
+        updatePipScale();
+      });
+    }
+
+    if (pipResetBtn) {
+      pipResetBtn.addEventListener('click', () => {
+        pipScale = 1.0;
+        updatePipScale();
+      });
+    }
+
+    // Mouse wheel zoom in PiP window
+    pipWin.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        pipScale = Math.min(2.5, Math.round((pipScale + 0.05) * 100) / 100);
+      } else {
+        pipScale = Math.max(0.5, Math.round((pipScale - 0.05) * 100) / 100);
+      }
+      updatePipScale();
+    }, { passive: false });
+
+    // Opacity slider
+    if (pipOpacityRange) {
+      pipOpacityRange.addEventListener('input', (e) => {
+        setPipOpacity(parseInt(e.target.value, 10));
+      });
+    }
+
+    // HUD toggle
+    if (pipToggleHudBtn) {
+      pipToggleHudBtn.addEventListener('click', () => {
+        pipHudVisible = !pipHudVisible;
+        const hudEl = pipWin.document.getElementById('scopeBottomHud');
+        if (hudEl) hudEl.style.display = pipHudVisible ? 'flex' : 'none';
+        pipToggleHudBtn.style.color = pipHudVisible ? '#4ade80' : '#94a3b8';
+      });
+    }
+
+    // Toolbar hide / show
+    if (pipHideToolbarBtn) {
+      pipHideToolbarBtn.addEventListener('click', () => {
+        pipToolbar.classList.add('hidden');
+        pipShowPill.style.display = 'block';
+      });
+    }
+
+    if (pipShowPill) {
+      pipShowPill.addEventListener('click', () => {
+        pipToolbar.classList.remove('hidden');
+        pipShowPill.style.display = 'none';
+      });
+    }
+
+    // Keyboard shortcuts inside PiP
+    pipWin.addEventListener('keydown', (e) => {
+      if (e.key === 'h' || e.key === 'H') {
+        const isHidden = pipToolbar.classList.contains('hidden');
+        if (isHidden) {
+          pipToolbar.classList.remove('hidden');
+          pipShowPill.style.display = 'none';
+        } else {
+          pipToolbar.classList.add('hidden');
+          pipShowPill.style.display = 'block';
+        }
+      } else if (e.key === '+' || e.key === '=') {
+        pipScale = Math.min(2.5, Math.round((pipScale + 0.1) * 100) / 100);
+        updatePipScale();
+      } else if (e.key === '-' || e.key === '_') {
+        pipScale = Math.max(0.5, Math.round((pipScale - 0.1) * 100) / 100);
+        updatePipScale();
+      } else if (e.key === '0') {
+        pipScale = 1.0;
+        updatePipScale();
+      } else if (e.key === 't' || e.key === 'T') {
+        const nextOpacity = pipOpacity === 0 ? 40 : (pipOpacity === 40 ? 80 : 0);
+        if (pipOpacityRange) pipOpacityRange.value = nextOpacity;
+        setPipOpacity(nextOpacity);
+      }
+    });
+
+    pipWin.addEventListener('pagehide', () => {
+      currentPipWindow = null;
+    });
+
+    // Draw canvas in PiP window
+    syncPipWindow(currentSolution);
+
+    showToast('🖼️ Đã ghim thước ngắm Always-On-Top! Nền đã trong suốt 100%.');
   } catch (err) {
     console.error('PiP Error:', err);
     showToast(`Không thể mở PiP: ${err.message}`);

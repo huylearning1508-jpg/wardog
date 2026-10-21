@@ -2073,3 +2073,152 @@ html, body {
   color: #38bdf8;
   letter-spacing: 0.5px;
 }
+
+/* ============================================================
+   PICTURE-IN-PICTURE (PIP) WINDOW CONTROLS & TRANSPARENCY
+   ============================================================ */
+.pip-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(10, 15, 22, 0.92);
+  border-bottom: 1px solid rgba(74, 222, 128, 0.3);
+  backdrop-filter: blur(8px);
+  gap: 8px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.pip-toolbar.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pip-tool-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pip-tool-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.pip-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.pip-btn:hover {
+  background: rgba(74, 222, 128, 0.25);
+  color: #4ade80;
+  border-color: #4ade80;
+}
+
+.pip-btn-sm {
+  padding: 2px 6px;
+  font-size: 0.62rem;
+}
+
+.pip-scale-val, .pip-opacity-val {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #4ade80;
+  min-width: 38px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.pip-slider {
+  width: 85px;
+  height: 4px;
+  accent-color: #4ade80;
+  cursor: pointer;
+}
+
+.pip-show-tools-pill {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 9999;
+  background: rgba(10, 15, 22, 0.75);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  color: #4ade80;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+}
+
+.pip-show-tools-pill:hover {
+  background: #4ade80;
+  color: #0f172a;
+}
+
+.pip-stage-wrap {
+  flex: 1;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* PiP Stage Scaling & Transparent Body */
+body.pip-active {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  transition: background 0.2s ease;
+}
+
+body.pip-active .scope-aperture {
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+body.pip-active.pip-no-bg {
+  background: transparent !important;
+}
+
+body.pip-active.pip-no-bg .scope-aperture,
+body.pip-active.pip-no-bg .scope-stage,
+body.pip-active.pip-no-bg .scope-reticle-box {
+  background: transparent !important;
+}
+
+body.pip-active.pip-no-bg .scope-heading-center-box {
+  background: rgba(15, 23, 42, 0.35) !important;
+}
+
+body.pip-active.pip-no-bg .scope-center-badge {
+  background: rgba(10, 15, 20, 0.35) !important;
+}
+
+body.pip-active.pip-no-bg .scope-bottom-hud {
+  background: rgba(10, 14, 20, 0.45) !important;
+}
