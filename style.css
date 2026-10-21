@@ -732,13 +732,13 @@ html, body {
 }
 
 /* ============================================================
-   GUNNER SIGHT IN-GAME SIMULATION HUD (BOTTOM RIGHT)
+   GUNNER SIGHT IN-GAME SIMULATION HUD (TOP RIGHT, NEXT TO HUD PANEL)
    ============================================================ */
 #gunner-sight-box {
   position: absolute;
-  bottom: 40px;
-  right: 14px;
-  width: 310px;
+  top: 14px;
+  right: 406px;
+  width: 290px;
   background: rgba(10, 14, 20, 0.95);
   border: 1px solid rgba(74, 222, 128, 0.3);
   border-radius: 8px;
@@ -750,7 +750,11 @@ html, body {
   user-select: none;
   overflow: hidden;
   font-family: var(--font-mono);
-  transition: transform 0.25s ease;
+  transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s ease;
+}
+
+#hud-panel.collapsed ~ #gunner-sight-box {
+  right: 140px;
 }
 
 #gunner-sight-box.minimized .gunner-body {
@@ -1007,6 +1011,16 @@ html, body {
   z-index: 1000;
 }
 
+@media (max-width: 1024px) {
+  #hud-panel {
+    width: 350px;
+  }
+  #gunner-sight-box {
+    right: 372px;
+    width: 270px;
+  }
+}
+
 @media (max-width: 768px) {
   #hud-panel {
     width: calc(100vw - 20px);
@@ -1015,9 +1029,10 @@ html, body {
     max-height: calc(100vh - 120px);
   }
   #gunner-sight-box {
-    width: 250px;
+    top: auto;
     bottom: 35px;
     right: 8px;
+    width: 250px;
   }
   .brand-title span {
     display: none;
