@@ -532,74 +532,79 @@ function drawHeadingTape(bearing) {
   }
 }
 
-// 4c. UPDATE GUNNER SIGHT HUD
+// 4c. ELEVATION LADDER MARKS (80m / 950 MIL to 684m / 150 MIL)
+const LADDER_MARKS = [
+  { mil: 950, r: 80, hasLabel: true },
+  { mil: 900, r: 110, hasLabel: false },
+  { mil: 850, r: 132, hasLabel: true },
+  { mil: 800, r: 187, hasLabel: true },
+  { mil: 750, r: 240, hasLabel: true },
+  { mil: 700, r: 290, hasLabel: false },
+  { mil: 650, r: 340, hasLabel: true },
+  { mil: 600, r: 385, hasLabel: false },
+  { mil: 550, r: 429, hasLabel: true },
+  { mil: 500, r: 470, hasLabel: false },
+  { mil: 450, r: 509, hasLabel: true },
+  { mil: 400, r: 545, hasLabel: false },
+  { mil: 350, r: 578, hasLabel: true },
+  { mil: 300, r: 609, hasLabel: false },
+  { mil: 250, r: 636, hasLabel: true },
+  { mil: 200, r: 661, hasLabel: false },
+  { mil: 150, r: 684, hasLabel: true }
+];
+
+const LADDER_PX_PER_MIL = 0.56;
+
+function initGunnerSightLadder() {
+  const leftTrack = document.getElementById('ladderLeftTrack');
+  const rightTrack = document.getElementById('ladderRightTrack');
+  if (!leftTrack || !rightTrack) return;
+
+  leftTrack.innerHTML = LADDER_MARKS.map(m => {
+    const topPx = (950 - m.mil) * LADDER_PX_PER_MIL;
+    const content = m.hasLabel
+      ? `<span class="ladder-num">${m.r}</span><span class="ladder-dash"></span>`
+      : `<span class="ladder-dash-only"></span>`;
+    return `<div class="ladder-row" data-mil="${m.mil}" style="top: ${topPx}px;">${content}</div>`;
+  }).join('');
+
+  rightTrack.innerHTML = LADDER_MARKS.map(m => {
+    const topPx = (950 - m.mil) * LADDER_PX_PER_MIL;
+    const content = m.hasLabel
+      ? `<span class="ladder-dash"></span><span class="ladder-num">${m.mil}</span>`
+      : `<span class="ladder-dash-only"></span>`;
+    return `<div class="ladder-row" data-mil="${m.mil}" style="top: ${topPx}px;">${content}</div>`;
+  }).join('');
+}
+
+// 4d. UPDATE GUNNER SIGHT HUD (RETICLE FIXED AT CENTER, LADDER MOVES UP/DOWN)
 function updateGunnerSight(sol) {
   if (!sol) return;
 
   drawHeadingTape(sol.bearing);
 
-  const ladderLeftMarks = document.getElementById('ladderLeftMarks');
-  const ladderRightMarks = document.getElementById('ladderRightMarks');
+  const leftTrack = document.getElementById('ladderLeftTrack');
+  const rightTrack = document.getElementById('ladderRightTrack');
+  const indLeft = document.getElementById('ladderIndLeft');
+  const indRight = document.getElementById('ladderIndRight');
   const gunnerMainDist = document.getElementById('gunnerMainDist');
   const gunnerSubStats = document.getElementById('gunnerSubStats');
   const targetCoordBadge = document.getElementById('target-coord-badge');
 
-  // Select dynamic bracket based on distance
-  let currentBracket = 1;
-  const dist = sol.adjustedDistance;
-  if (dist > 480) currentBracket = 3;
-  else if (dist > 300) currentBracket = 2;
+  // Slide Ladder Tracks up/down relative to fixed center needles (at Y = 75px)
+  const currentMil = sol.mils || (sol.adjustedDistance <= 80 ? 950 : 150);
+  const clampedMil = Math.max(150, Math.min(950, currentMil));
+  const translateY = (clampedMil - 950) * LADDER_PX_PER_MIL;
 
-  const bracketMarks = currentBracket === 1 ? [
-    { r: 80, mil: 950, pct: 12 },
-    { r: 132, mil: 850, pct: 32 },
-    { r: 187, mil: 800, pct: 52 },
-    { r: 240, mil: 750, pct: 72 },
-    { r: 340, mil: 650, pct: 90 }
-  ] : currentBracket === 2 ? [
-    { r: 240, mil: 750, pct: 12 },
-    { r: 300, mil: 690, pct: 32 },
-    { r: 358, mil: 630, pct: 52 },
-    { r: 420, mil: 560, pct: 72 },
-    { r: 486, mil: 480, pct: 90 }
-  ] : [
-    { r: 446, mil: 530, pct: 12 },
-    { r: 509, mil: 450, pct: 32 },
-    { r: 572, mil: 360, pct: 52 },
-    { r: 631, mil: 260, pct: 72 },
-    { r: 684, mil: 150, pct: 90 }
-  ];
+  if (leftTrack) leftTrack.style.transform = `translateY(${translateY}px)`;
+  if (rightTrack) rightTrack.style.transform = `translateY(${translateY}px)`;
 
-  // Re-render marks when bracket changes
-  if (ladderLeftMarks && ladderRightMarks && ladderLeftMarks.dataset.bracket !== String(currentBracket)) {
-    ladderLeftMarks.dataset.bracket = String(currentBracket);
-    ladderLeftMarks.innerHTML = bracketMarks.map(b =>
-      `<div class="ladder-mark" style="top: ${b.pct}%"><span class="ladder-num">${b.r}</span><span class="ladder-dash"></span></div>`
-    ).join('') + `<div class="ladder-indicator indicator-left" id="ladderIndLeft"></div>`;
-
-    ladderRightMarks.innerHTML = bracketMarks.map(b =>
-      `<div class="ladder-mark" style="top: ${b.pct}%"><span class="ladder-dash"></span><span class="ladder-num">${b.mil}</span></div>`
-    ).join('') + `<div class="ladder-indicator indicator-right" id="ladderIndRight"></div>`;
-  }
-
-  // Calculate indicator position
-  let topPct = 52;
-  if (dist <= bracketMarks[0].r) topPct = bracketMarks[0].pct;
-  else if (dist >= bracketMarks[bracketMarks.length - 1].r) topPct = bracketMarks[bracketMarks.length - 1].pct;
-  else {
-    for (let i = 0; i < bracketMarks.length - 1; i++) {
-      if (dist >= bracketMarks[i].r && dist <= bracketMarks[i+1].r) {
-        const t = (dist - bracketMarks[i].r) / (bracketMarks[i+1].r - bracketMarks[i].r);
-        topPct = bracketMarks[i].pct + t * (bracketMarks[i+1].pct - bracketMarks[i].pct);
-        break;
-      }
-    }
-  }
-
-  const indLeft = document.getElementById('ladderIndLeft');
-  const indRight = document.getElementById('ladderIndRight');
-  if (indLeft) indLeft.style.top = `${topPct}%`;
-  if (indRight) indRight.style.top = `${topPct}%`;
+  // Highlight rows close to center needles
+  document.querySelectorAll('.ladder-row').forEach(row => {
+    const rowMil = parseFloat(row.dataset.mil);
+    const diff = Math.abs(rowMil - clampedMil);
+    row.classList.toggle('center-active', diff <= 30);
+  });
 
   // Range validity formatting
   if (!sol.inRange) {
@@ -1078,5 +1083,6 @@ window.addEventListener('keydown', (e) => {
 
 // INIT ON PAGE LOAD
 window.addEventListener('DOMContentLoaded', () => {
+  initGunnerSightLadder();
   loadMap('kavkazi');
 });

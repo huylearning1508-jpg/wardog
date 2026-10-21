@@ -235,20 +235,18 @@
           <span class="tape-label tape-right">MIL</span>
         </div>
 
-        <!-- CENTER SIGHT & LADDERS -->
+        <!-- CENTER SIGHT & LADDERS (RETICLE & NEEDLES FIXED IN CENTER, LADDER MOVES UP/DOWN) -->
         <div class="gunner-center-stage">
-          <!-- LEFT: RANGE LADDER -->
-          <div class="gunner-ladder ladder-left" id="ladderLeftMarks">
-            <div class="ladder-mark" style="top: 12%"><span class="ladder-num">80</span><span class="ladder-dash"></span></div>
-            <div class="ladder-mark" style="top: 32%"><span class="ladder-num">132</span><span class="ladder-dash"></span></div>
-            <div class="ladder-mark" style="top: 52%"><span class="ladder-num">187</span><span class="ladder-dash"></span></div>
-            <div class="ladder-mark" style="top: 72%"><span class="ladder-num">240</span><span class="ladder-dash"></span></div>
-            <div class="ladder-mark" style="top: 90%"><span class="ladder-num">340</span><span class="ladder-dash"></span></div>
-            <div class="ladder-indicator indicator-left" id="ladderIndLeft" style="top: 52%;"></div>
+          <!-- LEFT: RANGE LADDER (SCROLLING TAPE) -->
+          <div class="gunner-ladder-viewport ladder-left-viewport">
+            <div class="ladder-track" id="ladderLeftTrack"></div>
           </div>
 
-          <!-- CENTER RETICLE -->
+          <!-- FIXED CENTER RETICLE WITH FIXED CENTER NEEDLES -->
           <div class="gunner-reticle-wrapper">
+            <!-- Left needle fixed at vertical center (50%) -->
+            <div class="ladder-indicator-fixed indicator-fixed-left" id="ladderIndLeft"></div>
+
             <svg class="gunner-reticle-svg" viewBox="0 0 160 160">
               <line x1="80" y1="20" x2="80" y2="48" stroke="#4ade80" stroke-width="1.5" />
               <line x1="80" y1="112" x2="80" y2="140" stroke="#4ade80" stroke-width="1.5" />
@@ -259,16 +257,14 @@
               <line x1="72" y1="68" x2="88" y2="68" stroke="#4ade80" stroke-width="1" />
               <line x1="72" y1="92" x2="88" y2="92" stroke="#4ade80" stroke-width="1" />
             </svg>
+
+            <!-- Right needle fixed at vertical center (50%) -->
+            <div class="ladder-indicator-fixed indicator-fixed-right" id="ladderIndRight"></div>
           </div>
 
-          <!-- RIGHT: MIL LADDER -->
-          <div class="gunner-ladder ladder-right" id="ladderRightMarks">
-            <div class="ladder-mark" style="top: 12%"><span class="ladder-dash"></span><span class="ladder-num">950</span></div>
-            <div class="ladder-mark" style="top: 32%"><span class="ladder-dash"></span><span class="ladder-num">850</span></div>
-            <div class="ladder-mark" style="top: 52%"><span class="ladder-dash"></span><span class="ladder-num">800</span></div>
-            <div class="ladder-mark" style="top: 72%"><span class="ladder-dash"></span><span class="ladder-num">750</span></div>
-            <div class="ladder-mark" style="top: 90%"><span class="ladder-dash"></span><span class="ladder-num">650</span></div>
-            <div class="ladder-indicator indicator-right" id="ladderIndRight" style="top: 52%;"></div>
+          <!-- RIGHT: MIL LADDER (SCROLLING TAPE) -->
+          <div class="gunner-ladder-viewport ladder-right-viewport">
+            <div class="ladder-track" id="ladderRightTrack"></div>
           </div>
         </div>
 
