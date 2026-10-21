@@ -237,6 +237,27 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 2200);
 }
 
+// FORMAT GRID COORDINATES (e.g. x-79.56 y-114.48 matching game HUD)
+function formatGridCoord(x, y) {
+  const gx = (x / 100).toFixed(2);
+  const gy = (y / 100).toFixed(2);
+  return `x${gx} y${gy}`;
+}
+
+// PARSE USER INPUT COORDINATES (Supports -79.56, x-79.56 or -7956)
+function parseCoordInput(val) {
+  if (typeof val === 'string') {
+    val = val.replace(/[xyXY]/g, '').trim();
+  }
+  const num = parseFloat(val);
+  if (isNaN(num)) return NaN;
+  // If player entered grid coordinates (e.g. -79.56 or 80.07), convert to game meters (* 100)
+  if (Math.abs(num) < 500) {
+    return num * 100;
+  }
+  return num;
+}
+
 // 1. ELEVATION LOOKUP LOGIC
 function getElevation(x, y) {
   if (!currentElevationData) return 0;
@@ -277,6 +298,10 @@ function calculateBallistics(gunPos, targetPos) {
   const zTarget = getElevation(targetPos.lng, targetPos.lat);
   const deltaZ = zTarget - zGun; // + means target is higher, - means lower
 
+  const cfg = MAP_CONFIGS[currentMapKey];
+  const zGunASL = Math.max(0, zGun - cfg.zRange.min);
+  const zTargetASL = Math.max(0, zTarget - cfg.zRange.min);
+
   const dist3D = Math.hypot(dx, dy, deltaZ);
 
   // Bearing (0° North, 90° East, clockwise)
@@ -297,13 +322,12 @@ function calculateBallistics(gunPos, targetPos) {
   const elevDegrees = mils !== null ? (mils * 0.05625).toFixed(1) : '---';
   const tof = mils !== null ? (10.0 + mils * 0.01494).toFixed(1) : '--.-';
 
-  // Apex altitude
-  const apexRise = inRange ? 40 + ((adjustedDistance - 80) / 604) * 260 : 40;
-  const apexZ = Math.max(zGun, zTarget) + apexRise;
+  // Apex altitude rise above the gun in meters
+  const apexRise = inRange ? Math.round(40 + ((adjustedDistance - 80) / 604) * 260) : 40;
 
   return {
-    gun: { x: gunPos.lng, y: gunPos.lat, z: zGun },
-    target: { x: targetPos.lng, y: targetPos.lat, z: zTarget },
+    gun: { x: gunPos.lng, y: gunPos.lat, z: zGun, zASL: zGunASL },
+    target: { x: targetPos.lng, y: targetPos.lat, z: zTarget, zASL: zTargetASL },
     dist2D,
     dist3D,
     deltaZ,
@@ -315,7 +339,7 @@ function calculateBallistics(gunPos, targetPos) {
     mils,
     elevDegrees,
     tof,
-    apexZ,
+    apexRise,
     inRange,
     status: elevSol.status,
     warning: elevSol.warning
@@ -351,7 +375,7 @@ function updateUI() {
     solElevationMils.textContent = `${currentSolution.mils}`;
     solElevationDeg.textContent = `${currentSolution.elevDegrees}° nâng nòng`;
     solToF.textContent = `~${currentSolution.tof}s`;
-    solApex.textContent = `+${Math.round(currentSolution.apexZ)}m`;
+    solApex.textContent = `+${currentSolution.apexRise}m`;
   } else {
     solElevationMils.textContent = `---`;
     solElevationDeg.textContent = currentSolution.status;
@@ -359,16 +383,16 @@ function updateUI() {
     solApex.textContent = `---`;
   }
 
-  // Details
-  gunCoordsDisplay.textContent = `X: ${currentSolution.gun.x.toFixed(1)}, Y: ${currentSolution.gun.y.toFixed(1)} (Z: ${currentSolution.gun.z.toFixed(1)}m)`;
-  targetCoordsDisplay.textContent = `X: ${currentSolution.target.x.toFixed(1)}, Y: ${currentSolution.target.y.toFixed(1)} (Z: ${currentSolution.target.z.toFixed(1)}m)`;
+  // Details - Formatted in game grid coordinate style (e.g. x-80.07 y-114.30)
+  gunCoordsDisplay.textContent = `${formatGridCoord(currentSolution.gun.x, currentSolution.gun.y)} (Độ cao: ${currentSolution.gun.zASL.toFixed(1)}m)`;
+  targetCoordsDisplay.textContent = `${formatGridCoord(currentSolution.target.x, currentSolution.target.y)} (Độ cao: ${currentSolution.target.zASL.toFixed(1)}m)`;
   dist3dDisplay.textContent = `${currentSolution.dist3D.toFixed(1)} m`;
 
-  // Form Inputs sync
-  inputGunX.value = currentSolution.gun.x.toFixed(1);
-  inputGunY.value = currentSolution.gun.y.toFixed(1);
-  inputTargetX.value = currentSolution.target.x.toFixed(1);
-  inputTargetY.value = currentSolution.target.y.toFixed(1);
+  // Form Inputs sync (Game grid format: e.g. -80.07, -114.30)
+  inputGunX.value = (currentSolution.gun.x / 100).toFixed(2);
+  inputGunY.value = (currentSolution.gun.y / 100).toFixed(2);
+  inputTargetX.value = (currentSolution.target.x / 100).toFixed(2);
+  inputTargetY.value = (currentSolution.target.y / 100).toFixed(2);
 
   // Update Trajectory Polyline (Clean dashed line matching Metaforge)
   if (trajectoryLine) {
@@ -393,92 +417,8 @@ function updateUI() {
     });
   }
 
-  // Redraw Terrain Cross-Section Canvas
-  drawCrossSection();
-
   // Update In-Game Gunner Sight Simulation
   updateGunnerSight(currentSolution);
-}
-
-// 4. DRAW TERRAIN CROSS-SECTION CANVAS
-function drawCrossSection() {
-  const canvas = document.getElementById('crossSectionCanvas');
-  if (!canvas || !currentSolution) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width = canvas.clientWidth * window.devicePixelRatio;
-  const h = canvas.height = canvas.clientHeight * window.devicePixelRatio;
-
-  ctx.clearRect(0, 0, w, h);
-
-  const samples = 40;
-  const points = [];
-  let minZ = Infinity, maxZ = -Infinity;
-
-  for (let i = 0; i <= samples; i++) {
-    const t = i / samples;
-    const x = currentSolution.gun.x + (currentSolution.target.x - currentSolution.gun.x) * t;
-    const y = currentSolution.gun.y + (currentSolution.target.y - currentSolution.gun.y) * t;
-    const z = getElevation(x, y);
-    points.push({ t, z });
-    if (z < minZ) minZ = z;
-    if (z > maxZ) maxZ = z;
-  }
-
-  // Add apex height to max bounds
-  maxZ = Math.max(maxZ, currentSolution.apexZ) + 20;
-  minZ = minZ - 20;
-  const rangeZ = Math.max(1, maxZ - minZ);
-
-  const padding = 20 * window.devicePixelRatio;
-  const mapY = (z) => h - padding - ((z - minZ) / rangeZ) * (h - 2 * padding);
-  const mapX = (t) => padding + t * (w - 2 * padding);
-
-  // 1. Draw Terrain Fill
-  ctx.beginPath();
-  ctx.moveTo(mapX(0), h);
-  for (let i = 0; i <= samples; i++) {
-    ctx.lineTo(mapX(points[i].t), mapY(points[i].z));
-  }
-  ctx.lineTo(mapX(1), h);
-  ctx.closePath();
-
-  const terrainGrad = ctx.createLinearGradient(0, mapY(maxZ), 0, h);
-  terrainGrad.addColorStop(0, 'rgba(245, 158, 11, 0.25)');
-  terrainGrad.addColorStop(1, 'rgba(10, 16, 26, 0.9)');
-  ctx.fillStyle = terrainGrad;
-  ctx.fill();
-
-  // Terrain line
-  ctx.strokeStyle = '#f59e0b';
-  ctx.lineWidth = 2 * window.devicePixelRatio;
-  ctx.stroke();
-
-  // 2. Draw Parabolic Shell Trajectory
-  ctx.beginPath();
-  for (let i = 0; i <= samples; i++) {
-    const t = i / samples;
-    const arcZ = currentSolution.gun.z + (currentSolution.target.z - currentSolution.gun.z) * t + 4 * (currentSolution.apexZ - Math.max(currentSolution.gun.z, currentSolution.target.z)) * t * (1 - t);
-    const px = mapX(t);
-    const py = mapY(arcZ);
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2 * window.devicePixelRatio;
-  ctx.setLineDash([4 * window.devicePixelRatio, 4 * window.devicePixelRatio]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Draw Gun & Target Dots
-  ctx.fillStyle = '#f59e0b';
-  ctx.beginPath();
-  ctx.arc(mapX(0), mapY(currentSolution.gun.z), 5 * window.devicePixelRatio, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#ef4444';
-  ctx.beginPath();
-  ctx.arc(mapX(1), mapY(currentSolution.target.z), 5 * window.devicePixelRatio, 0, Math.PI * 2);
-  ctx.fill();
 }
 
 // 4b. DRAW HEADING TAPE (GUNNER SIGHT)
@@ -669,11 +609,13 @@ async function loadMap(mapKey) {
       attributionControl: false
     });
 
-    // Mouse move coordinate tracker
+    // Mouse move coordinate tracker (Grid format x-79.56 y-114.48)
     map.on('mousemove', (e) => {
-      const z = getElevation(e.latlng.lng, e.latlng.lat);
-      footerPos.textContent = `X: ${e.latlng.lng.toFixed(1)} | Y: ${e.latlng.lat.toFixed(1)}`;
-      footerElev.textContent = `Độ cao (Z): ${z.toFixed(1)} m`;
+      const zRaw = getElevation(e.latlng.lng, e.latlng.lat);
+      const cfg = MAP_CONFIGS[currentMapKey];
+      const zASL = Math.max(0, zRaw - cfg.zRange.min);
+      footerPos.textContent = formatGridCoord(e.latlng.lng, e.latlng.lat);
+      footerElev.textContent = `Độ cao: ${zASL.toFixed(1)} m`;
     });
 
     // Map click handler for interactive placement
@@ -882,10 +824,10 @@ centerViewBtn.addEventListener('click', () => {
 
 // 8. FORM CONTROLS & LISTENERS
 applyCoordsBtn.addEventListener('click', () => {
-  const gx = parseFloat(inputGunX.value);
-  const gy = parseFloat(inputGunY.value);
-  const tx = parseFloat(inputTargetX.value);
-  const ty = parseFloat(inputTargetY.value);
+  const gx = parseCoordInput(inputGunX.value);
+  const gy = parseCoordInput(inputGunY.value);
+  const tx = parseCoordInput(inputTargetX.value);
+  const ty = parseCoordInput(inputTargetY.value);
 
   if (!isNaN(gx) && !isNaN(gy)) gunMarker.setLatLng([gy, gx]);
   if (!isNaN(tx) && !isNaN(ty)) targetMarker.setLatLng([ty, tx]);
@@ -907,9 +849,11 @@ moveToTargetBtn.addEventListener('click', () => {
 copySolutionBtn.addEventListener('click', () => {
   if (!currentSolution) return;
   const s = currentSolution;
+  const gunStr = formatGridCoord(s.gun.x, s.gun.y);
+  const targetStr = formatGridCoord(s.target.x, s.target.y);
   const text = s.inRange
-    ? `[L81 MORTAR - ${MAP_CONFIGS[currentMapKey].name}] Cự ly cần bắn: ${s.adjustedDistance.toFixed(1)}m (Thực: ${s.dist2D.toFixed(0)}m, Bù cao: ${s.rangeCompensation >= 0 ? '+' : ''}${s.rangeCompensation.toFixed(1)}m) | Hướng: ${Math.round(s.bearing)}° (${s.cardinal}) | Thước ngắm: ${s.mils} MIL (${s.elevDegrees}°) | Đạn bay: ~${s.tof}s`
-    : `[L81 MORTAR - ${MAP_CONFIGS[currentMapKey].name}] ⚠️ ${s.warning} (Cự ly: ${s.adjustedDistance.toFixed(0)}m ngoài khoảng 80m - 684m) | Hướng: ${Math.round(s.bearing)}° (${s.cardinal})`;
+    ? `[L81 MORTAR - ${MAP_CONFIGS[currentMapKey].name}] Súng: ${gunStr} -> Mục tiêu: ${targetStr} | Cự ly cần bắn: ${s.adjustedDistance.toFixed(1)}m (Thực: ${s.dist2D.toFixed(0)}m, Bù cao: ${s.rangeCompensation >= 0 ? '+' : ''}${s.rangeCompensation.toFixed(1)}m) | Hướng: ${Math.round(s.bearing)}° (${s.cardinal}) | Thước ngắm: ${s.mils} MIL (${s.elevDegrees}°) | Đạn bay: ~${s.tof}s`
+    : `[L81 MORTAR - ${MAP_CONFIGS[currentMapKey].name}] Súng: ${gunStr} -> Mục tiêu: ${targetStr} | ⚠️ ${s.warning} (Cự ly: ${s.adjustedDistance.toFixed(0)}m ngoài khoảng 80m - 684m) | Hướng: ${Math.round(s.bearing)}° (${s.cardinal})`;
   navigator.clipboard.writeText(text).then(() => {
     showToast("Đã sao chép giải pháp bắn vào bộ nhớ tạm!");
   });
@@ -921,9 +865,10 @@ saveTargetBtn.addEventListener('click', () => {
   const s = currentSolution;
   savedTargets.unshift({
     name: `Mục tiêu #${savedTargets.length + 1}`,
-    x: s.target.x.toFixed(1),
-    y: s.target.y.toFixed(1),
-    z: s.target.z.toFixed(1),
+    rawX: s.target.x,
+    rawY: s.target.y,
+    coord: formatGridCoord(s.target.x, s.target.y),
+    zASL: s.target.zASL.toFixed(1),
     dist: s.adjustedDistance.toFixed(0) + 'm',
     bearing: Math.round(s.bearing) + '°'
   });
@@ -944,11 +889,11 @@ function renderHistory() {
     item.style.cursor = 'pointer';
     item.style.padding = '6px 0';
     item.innerHTML = `
-      <div><strong>${t.name}</strong> (${t.x}, ${t.y})</div>
+      <div><strong>${t.name}</strong> (${t.coord})</div>
       <div style="color:var(--accent-amber)">${t.dist} | ${t.bearing}</div>
     `;
     item.addEventListener('click', () => {
-      targetMarker.setLatLng([parseFloat(t.y), parseFloat(t.x)]);
+      targetMarker.setLatLng([t.rawY, t.rawX]);
       updateUI();
       showToast(`Đã chuyển mục tiêu về ${t.name}`);
     });

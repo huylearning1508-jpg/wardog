@@ -515,33 +515,6 @@ html, body {
   color: #fff;
 }
 
-/* CROSS SECTION CANVAS */
-.cross-section-box {
-  background: #0b1118;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cs-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-#crossSectionCanvas {
-  width: 100%;
-  height: 120px;
-  background: #070b10;
-  border-radius: 6px;
-  border: 1px solid #162232;
-}
-
 /* INPUT FORM */
 .coord-form-group {
   display: flex;

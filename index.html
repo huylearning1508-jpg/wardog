@@ -80,7 +80,6 @@
       <!-- TABS -->
       <div class="panel-tabs">
         <button class="tab-btn active" data-pane="pane-solution">Kết Quả Bắn</button>
-        <button class="tab-btn" data-pane="pane-profile">Mặt Cắt Địa Hình</button>
         <button class="tab-btn" data-pane="pane-coords">Nhập Tọa Độ</button>
         <button class="tab-btn" data-pane="pane-history">Lịch Sử</button>
       </div>
@@ -107,31 +106,31 @@
 
           <div class="sol-card highlight-amber">
             <div class="sol-label">Thước Ngắm (Elevation)</div>
-            <div class="sol-value" id="solElevationMils">1350</div>
-            <div class="sol-sub" id="solElevationDeg">75.0° nâng nòng</div>
+            <div class="sol-value" id="solElevationMils">---</div>
+            <div class="sol-sub" id="solElevationDeg">---° nâng nòng</div>
           </div>
 
           <div class="sol-card">
             <div class="sol-label">Thời Gian Bay (ToF)</div>
-            <div class="sol-value" id="solToF">~15.0s</div>
+            <div class="sol-value" id="solToF">--.-s</div>
             <div class="sol-sub">Đạn chạm đất</div>
           </div>
 
           <div class="sol-card">
             <div class="sol-label">Đỉnh Đạn Cao Nhất (Apex)</div>
-            <div class="sol-value" id="solApex">+180m</div>
-            <div class="sol-sub">Độ cao trên không</div>
+            <div class="sol-value" id="solApex">+0m</div>
+            <div class="sol-sub">Độ cao trên nòng súng</div>
           </div>
         </div>
 
         <!-- DETAILED SPECS -->
         <div class="specs-table">
           <div class="spec-row">
-            <span class="spec-key">Vị trí Súng cối (X, Y, Z):</span>
+            <span class="spec-key">Tọa độ Súng [G]:</span>
             <span class="spec-val" id="gunCoordsDisplay">---</span>
           </div>
           <div class="spec-row">
-            <span class="spec-key">Vị trí Mục tiêu (X, Y, Z):</span>
+            <span class="spec-key">Tọa độ Mục tiêu [T]:</span>
             <span class="spec-val" id="targetCoordsDisplay">---</span>
           </div>
           <div class="spec-row">
@@ -145,52 +144,42 @@
         </button>
       </div>
 
-      <!-- TAB 2: TERRAIN CROSS SECTION PROFILE -->
-      <div class="panel-content tab-pane" id="pane-profile" style="display: none;">
-        <div class="cross-section-box">
-          <div class="cs-header">
-            <span>Mặt cắt địa hình & Quỹ đạo đạn</span>
-            <span style="color:var(--accent-green)">Parabol đạn cối</span>
-          </div>
-          <canvas id="crossSectionCanvas"></canvas>
-          <div style="font-size:0.75rem; color:var(--text-muted); line-height: 1.4;">
-            💡 Đồ thị hiển thị mặt đất thực tế dọc theo đường bay từ Súng (chấm xanh lá bên trái) đến Mục Tiêu (chấm đỏ bên phải). Đường nét đứt màu xanh lá là quỹ đạo đạn cối bay vút lên trời để vượt chướng ngại vật.
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 3: MANUAL COORDINATES INPUT -->
+      <!-- TAB 2: MANUAL COORDINATES INPUT -->
       <div class="panel-content tab-pane" id="pane-coords" style="display: none;">
         <div class="coord-form-group">
           <div class="form-group-title" style="color: var(--accent-green)">
-            <span>💥 Vị trí Súng cối (Gun)</span>
+            <span>💥 Vị trí Súng cối (Gun [G])</span>
           </div>
           <div class="input-row">
             <div class="coord-field">
-              <label>X (East / Đông)</label>
-              <input type="number" step="any" id="inputGunX" placeholder="-8360">
+              <label>Tọa độ X (VD: -80.07)</label>
+              <input type="text" id="inputGunX" placeholder="-80.07">
             </div>
             <div class="coord-field">
-              <label>Y (North / Bắc)</label>
-              <input type="number" step="any" id="inputGunY" placeholder="-11233">
+              <label>Tọa độ Y (VD: -114.30)</label>
+              <input type="text" id="inputGunY" placeholder="-114.30">
             </div>
           </div>
         </div>
 
         <div class="coord-form-group">
           <div class="form-group-title" style="color: var(--accent-red)">
-            <span>🎯 Vị trí Mục tiêu (Target)</span>
+            <span>🎯 Vị trí Mục tiêu (Target [T])</span>
           </div>
           <div class="input-row">
             <div class="coord-field">
-              <label>X (East / Đông)</label>
-              <input type="number" step="any" id="inputTargetX" placeholder="-8160">
+              <label>Tọa độ X (VD: -79.56)</label>
+              <input type="text" id="inputTargetX" placeholder="-79.56">
             </div>
             <div class="coord-field">
-              <label>Y (North / Bắc)</label>
-              <input type="number" step="any" id="inputTargetY" placeholder="-11033">
+              <label>Tọa độ Y (VD: -114.48)</label>
+              <input type="text" id="inputTargetY" placeholder="-114.48">
             </div>
           </div>
+        </div>
+
+        <div style="font-size:0.72rem; color:var(--text-muted); line-height: 1.4; padding: 0 4px;">
+          💡 Hỗ trợ nhập tọa độ dạng game (VD: <code>-79.56</code> hoặc <code>x-79.56</code>) hoặc mét thực (VD: <code>-7956</code>).
         </div>
 
         <button class="btn-primary" id="applyCoordsBtn">
