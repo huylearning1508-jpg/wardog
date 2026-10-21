@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "world": "Europe",
+  "gameBuild": "25937608",
+  "units": "meters",
+  "configs": [
+    {
+      "config": "DA_ControlZone_Config_Europe",
+      "mode": "Standard",
+      "zone": {
+        "center": [
+          -6383.4056,
+          -6207.8406,
+          -933.9295
+        ],
+        "extents": [
+          550,
+          550,
+          150
+        ],
+        "shape": "Cylinder",
+        "hotZone": {
+          "extents": [
+            85,
+            85,
+            150
+          ],
+          "shape": "Cylinder"
+        }
+      },
+      "alternatives": [
+        {
+          "id": "ZoneAlternator.Ozeti.Default.Circle",
+          "weight": 1,
+          "zone": {
+            "center": [
+              -6198.2656,
+              -6166.7094,
+              -933.9295
+            ],
+            "extents": [
+              550,
+              550,
+              150
+            ],
+            "shape": "Cylinder",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                150
+              ],
+              "shape": "Cylinder"
+            }
+          }
+        },
+        {
+          "id": "ZoneAlternator.Ozeti.Farmland.Circle",
+          "weight": 0,
+          "zone": {
+            "center": [
+              -6729.351,
+              -6169.2244,
+              -933.9295
+            ],
+            "extents": [
+              550,
+              550,
+              150
+            ],
+            "shape": "Cylinder",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                150
+              ],
+              "shape": "Cylinder"
+            }
+          }
+        },
+        {
+          "id": "ZoneAlternator.Ozeti.Church.Circle",
+          "weight": 1,
+          "zone": {
+            "center": [
+              -6036.972,
+              -6136.3056,
+              -882.9494
+            ],
+            "extents": [
+              550,
+              550,
+              150
+            ],
+            "shape": "Cylinder",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                150
+              ],
+              "shape": "Cylinder"
+            }
+          }
+        },
+        {
+          "id": "ZoneAlternator.Ozeti.River.Circle",
+          "weight": 1,
+          "zone": {
+            "center": [
+              -6425.6406,
+              -6054.3556,
+              -937.3572
+            ],
+            "extents": [
+              550,
+              550,
+              150
+            ],
+            "shape": "Cylinder",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                150
+              ],
+              "shape": "Cylinder"
+            }
+          }
+        }
+      ],
+      "hotZoneMovement": {
+        "moveDelay": 25,
+        "innerRadiusFraction": 0.95,
+        "defaultSpeed": 1,
+        "dynamicSpeeds": true,
+        "speeds": [
+          0.75,
+          1,
+          1.25,
+          1.5,
+          1.75,
+          2
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "world": "Kavkazi",
+  "gameBuild": "25937608",
+  "units": "meters",
+  "configs": [
+    {
+      "config": "DA_ControlZoneConfig_Bakurani",
+      "mode": "Standard",
+      "zone": {
+        "center": [
+          -8360.6725,
+          -11233.121,
+          -951.6
+        ],
+        "extents": [
+          500,
+          500,
+          170
+        ],
+        "shape": "Cylinder",
+        "hotZone": {
+          "extents": [
+            85,
+            85,
+            170
+          ],
+          "shape": "Cylinder"
+        }
+      },
+      "alternatives": [
+        {
+          "id": "ZoneAlternator.Bakurani.Default.Circle",
+          "weight": 2,
+          "zone": {
+            "center": [
+              -8360.6725,
+              -11233.121,
+              -951.6
+            ],
+            "extents": [
+              500,
+              500,
+              170
+            ],
+            "shape": "Cylinder",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                170
+              ],
+              "shape": "Cylinder"
+            }
+          }
+        },
+        {
+          "id": "ZoneAlternator.Bakurani.Farmland.Circle",
+          "weight": 1,
+          "zone": {
+            "center": [
+              -8214.826,
+              -10988.704,
+              -951.6
+            ],
+            "extents": [
+              500,
+              500,
+              170
+            ],
+            "shape": "Cylinder",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                170
+              ],
+              "shape": "Cylinder"
+            }
+          }
+        },
+        {
+          "id": "ZoneAlternator.Bakurani.Lumberyard.Circle",
+          "weight": 1,
+          "zone": {
+            "center": [
+              -8102.317,
+              -11232.8,
+              -951.6
+            ],
+            "extents": [
+              500,
+              500,
+              170
+            ],
+            "shape": "Cylinder",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                170
+              ],
+              "shape": "Cylinder"
+            }
+          }
+        }
+      ],
+      "hotZoneMovement": {
+        "moveDelay": 25,
+        "innerRadiusFraction": 0.95,
+        "defaultSpeed": 1,
+        "dynamicSpeeds": true,
+        "speeds": [
+          0.75,
+          1,
+          1.25,
+          1.5,
+          1.75,
+          2
+        ]
+      }
+    },
+    {
+      "config": "DA_ControlZoneConfig_SniperShowdown_Bakurani",
+      "mode": "SniperShowdown",
+      "zone": {
+        "center": [
+          -6726.881,
+          -11170.976,
+          -951.6
+        ],
+        "extents": [
+          350,
+          350,
+          170
+        ],
+        "shape": "Cylinder",
+        "hotZone": {
+          "extents": [
+            75,
+            75,
+            170
+          ],
+          "shape": "Cylinder"
+        }
+      },
+      "alternatives": [],
+      "hotZoneMovement": {
+        "firstMoveDelay": 0,
+        "moveDelay": 0,
+        "innerRadiusFraction": 0.95,
+        "defaultSpeed": 1.5,
+        "dynamicSpeeds": true,
+        "speeds": [
+          1.25,
+          1.5,
+          2,
+          2.25,
+          2.75,
+          3
+        ]
+      }
+    }
+  ]
+}

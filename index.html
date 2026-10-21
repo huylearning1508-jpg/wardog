@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bản Đồ Bắn Cối & Pháo Binh - WARDOGS Tactical Artillery Map</title>
+  
+  <!-- Leaflet CSS (Offline Local) -->
+  <link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="app-container">
+  <!-- TOP NAVIGATION BAR -->
+  <header id="top-bar">
+    <div class="brand-section">
+      <svg class="brand-logo" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="1" x2="12" y2="5" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2"/>
+        <line x1="1" y1="12" x2="5" y2="12" stroke="currentColor" stroke-width="2"/>
+        <line x1="19" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+      </svg>
+      <div class="brand-title">
+        WARDOGS <span>ARTILLERY</span>
+        <span class="brand-tag">L81 MORTAR</span>
+      </div>
+    </div>
+
+    <!-- 3 MAP SELECTION BUTTONS -->
+    <div class="map-selector">
+      <button class="map-btn active" data-map="kavkazi" title="Bản đồ Bakurani (Dãy núi Caucasus)">
+        🏔️ Bakurani
+      </button>
+      <button class="map-btn" data-map="europe" title="Bản đồ Ozeti (Thảo nguyên Châu Âu)">
+        🏰 Ozeti
+      </button>
+      <button class="map-btn" data-map="north-america" title="Bản đồ Zestafona (Rừng Bắc Mỹ)">
+        🌲 Zestafona
+      </button>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="nav-actions">
+      <button class="action-btn" id="setGunModeBtn" title="Nhấn vào đây rồi click trên map để đặt Súng (Phím 1)">
+        💥 Đặt Súng [1]
+      </button>
+      <button class="action-btn" id="setTargetModeBtn" title="Nhấn vào đây rồi click trên map để đặt Mục Tiêu (Phím 2)">
+        🎯 Đặt Mục Tiêu [2]
+      </button>
+      <button class="action-btn" id="centerViewBtn" title="Căn giữa Súng và Mục tiêu (Phím Cách)">
+        🔍 Căn Giữa
+      </button>
+      <button class="action-btn" id="copySolutionBtn" title="Sao chép thông số bắn gửi cho đồng đội">
+        📋 Sao Chép
+      </button>
+    </div>
+  </header>
+
+  <!-- MAP VIEWPORT -->
+  <main id="map-viewport">
+    <div id="map"></div>
+
+    <!-- FLOATING HUD PANEL -->
+    <div id="hud-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🎯 BẢNG BẮN CỐI L81</span>
+        </div>
+        <div class="panel-controls">
+          <button class="icon-btn" id="hudCollapseBtn" title="Thu gọn bảng">✕</button>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="panel-tabs">
+        <button class="tab-btn active" data-pane="pane-solution">Kết Quả Bắn</button>
+        <button class="tab-btn" data-pane="pane-profile">Mặt Cắt Địa Hình</button>
+        <button class="tab-btn" data-pane="pane-coords">Nhập Tọa Độ</button>
+        <button class="tab-btn" data-pane="pane-history">Lịch Sử</button>
+      </div>
+
+      <!-- TAB 1: FIRING SOLUTION -->
+      <div class="panel-content tab-pane" id="pane-solution">
+        <!-- BIG HERO CARD: ADJUSTED DISTANCE (COMPENSATED) -->
+        <div class="firing-solution-hero">
+          <div class="hero-label">CỰ LY CẦN ĐẶT THƯỚC NGẮM (ĐÃ BÙ ĐỘ CAO)</div>
+          <div class="hero-value" id="heroFiringRange">0.0 <span class="hero-unit">m</span></div>
+          <div class="hero-sub">
+            <span class="hero-pill" id="heroFlatDist">Thực: 0.0 m</span>
+            <span class="hero-pill" id="heroDeltaZ">Độ cao: +0.0 m (0m bù)</span>
+          </div>
+        </div>
+
+        <!-- 2x2 SOLUTION METRICS -->
+        <div class="solution-grid">
+          <div class="sol-card highlight-cyan">
+            <div class="sol-label">Góc Xoay Nòng (Bearing)</div>
+            <div class="sol-value" id="solBearing">0°</div>
+            <div class="sol-sub" id="solCardinal">Bắc (N)</div>
+          </div>
+
+          <div class="sol-card highlight-amber">
+            <div class="sol-label">Thước Ngắm (Elevation)</div>
+            <div class="sol-value" id="solElevationMils">1350</div>
+            <div class="sol-sub" id="solElevationDeg">75.0° nâng nòng</div>
+          </div>
+
+          <div class="sol-card">
+            <div class="sol-label">Thời Gian Bay (ToF)</div>
+            <div class="sol-value" id="solToF">~15.0s</div>
+            <div class="sol-sub">Đạn chạm đất</div>
+          </div>
+
+          <div class="sol-card">
+            <div class="sol-label">Đỉnh Đạn Cao Nhất (Apex)</div>
+            <div class="sol-value" id="solApex">+180m</div>
+            <div class="sol-sub">Độ cao trên không</div>
+          </div>
+        </div>
+
+        <!-- DETAILED SPECS -->
+        <div class="specs-table">
+          <div class="spec-row">
+            <span class="spec-key">Vị trí Súng cối (X, Y, Z):</span>
+            <span class="spec-val" id="gunCoordsDisplay">---</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-key">Vị trí Mục tiêu (X, Y, Z):</span>
+            <span class="spec-val" id="targetCoordsDisplay">---</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-key">Cự ly đường thẳng 3D:</span>
+            <span class="spec-val" id="dist3dDisplay">---</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="saveTargetBtn">
+          💾 Lưu Mục Tiêu Này Vào Danh Sách
+        </button>
+      </div>
+
+      <!-- TAB 2: TERRAIN CROSS SECTION PROFILE -->
+      <div class="panel-content tab-pane" id="pane-profile" style="display: none;">
+        <div class="cross-section-box">
+          <div class="cs-header">
+            <span>Mặt cắt địa hình & Quỹ đạo đạn</span>
+            <span style="color:var(--accent-green)">Parabol đạn cối</span>
+          </div>
+          <canvas id="crossSectionCanvas"></canvas>
+          <div style="font-size:0.75rem; color:var(--text-muted); line-height: 1.4;">
+            💡 Đồ thị hiển thị mặt đất thực tế dọc theo đường bay từ Súng (chấm xanh lá bên trái) đến Mục Tiêu (chấm đỏ bên phải). Đường nét đứt màu xanh lá là quỹ đạo đạn cối bay vút lên trời để vượt chướng ngại vật.
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: MANUAL COORDINATES INPUT -->
+      <div class="panel-content tab-pane" id="pane-coords" style="display: none;">
+        <div class="coord-form-group">
+          <div class="form-group-title" style="color: var(--accent-green)">
+            <span>💥 Vị trí Súng cối (Gun)</span>
+          </div>
+          <div class="input-row">
+            <div class="coord-field">
+              <label>X (East / Đông)</label>
+              <input type="number" step="any" id="inputGunX" placeholder="-8360">
+            </div>
+            <div class="coord-field">
+              <label>Y (North / Bắc)</label>
+              <input type="number" step="any" id="inputGunY" placeholder="-11233">
+            </div>
+          </div>
+        </div>
+
+        <div class="coord-form-group">
+          <div class="form-group-title" style="color: var(--accent-red)">
+            <span>🎯 Vị trí Mục tiêu (Target)</span>
+          </div>
+          <div class="input-row">
+            <div class="coord-field">
+              <label>X (East / Đông)</label>
+              <input type="number" step="any" id="inputTargetX" placeholder="-8160">
+            </div>
+            <div class="coord-field">
+              <label>Y (North / Bắc)</label>
+              <input type="number" step="any" id="inputTargetY" placeholder="-11033">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="applyCoordsBtn">
+          ✅ Áp Dụng Tọa Độ Lên Bản Đồ
+        </button>
+
+        <button class="action-btn" style="justify-content:center; padding:10px;" id="moveToTargetBtn">
+          🚶 Đã tới nơi: Chuyển Súng tới vị trí Mục Tiêu
+        </button>
+      </div>
+
+      <!-- TAB 4: SAVED TARGETS HISTORY -->
+      <div class="panel-content tab-pane" id="pane-history" style="display: none;">
+        <div class="specs-table" id="historyList">
+          <div style="color:var(--text-muted);font-size:0.75rem;text-align:center;">Chưa có mục tiêu lưu</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD TOGGLE BUTTON (SHOWN WHEN PANEL IS COLLAPSED) -->
+    <button id="hud-toggle-btn" style="display: none;">
+      🎯 Hiện Bảng Tính Bắn
+    </button>
+  </main>
+
+  <!-- FOOTER COORDINATE TRACKER -->
+  <footer id="footer-bar">
+    <div class="footer-pos" id="footer-pos">X: 0.0 | Y: 0.0</div>
+    <div class="footer-elev" id="footer-elev">Độ cao (Z): --- m</div>
+    <div>WARDOGS v25937608 | Kéo thả icon súng/mục tiêu để tính toán</div>
+  </footer>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-cyan);">ĐANG TẢI DỮ LIỆU ĐỊA HÌNH 3D & BẢN ĐỒ...</div>
+  </div>
+
+  <div class="copied-toast" id="toast">Đã sao chép!</div>
+</div>
+
+<!-- Leaflet JS (Local Offline) -->
+<script src="lib/leaflet/leaflet.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

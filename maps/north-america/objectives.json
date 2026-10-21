@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "world": "NorthAmerica",
+  "gameBuild": "25937608",
+  "units": "meters",
+  "configs": [
+    {
+      "config": "DA_ControlZone_Config_NorthAmerica",
+      "mode": "Standard",
+      "zone": {
+        "center": [
+          -1127.2751,
+          -2112.3694,
+          36.4091
+        ],
+        "extents": [
+          500,
+          500,
+          500
+        ],
+        "hotZone": {
+          "extents": [
+            85,
+            85,
+            850
+          ]
+        }
+      },
+      "alternatives": [
+        {
+          "id": "ZoneAlternator.Zestafona.Default.Circle",
+          "weight": 1,
+          "zone": {
+            "center": [
+              -1127.2751,
+              -2112.3694,
+              36.4091
+            ],
+            "extents": [
+              500,
+              500,
+              500
+            ],
+            "shape": "Ellipse",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                500
+              ],
+              "shape": "Ellipse"
+            }
+          }
+        },
+        {
+          "id": "ZoneAlternator.Zestafona.SmallFactory.Circle",
+          "weight": 0,
+          "zone": {
+            "center": [
+              -1075.6092,
+              -2357.5142,
+              36.4091
+            ],
+            "extents": [
+              500,
+              500,
+              500
+            ],
+            "shape": "Ellipse",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                500
+              ],
+              "shape": "Ellipse"
+            }
+          }
+        },
+        {
+          "id": "ZoneAlternator.Zestafona.WaterTreatment.Circle",
+          "weight": 1,
+          "zone": {
+            "center": [
+              -1192.8796,
+              -1839.581,
+              36.4091
+            ],
+            "extents": [
+              500,
+              500,
+              500
+            ],
+            "shape": "Ellipse",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                500
+              ],
+              "shape": "Ellipse"
+            }
+          }
+        },
+        {
+          "id": "ZoneAlternator.Zestafona.Houses.Circle",
+          "weight": 1,
+          "zone": {
+            "center": [
+              -1298.4862,
+              -2210.92,
+              36.4091
+            ],
+            "extents": [
+              500,
+              500,
+              500
+            ],
+            "shape": "Ellipse",
+            "hotZone": {
+              "extents": [
+                85,
+                85,
+                500
+              ],
+              "shape": "Ellipse"
+            }
+          }
+        }
+      ],
+      "hotZoneMovement": {
+        "moveDelay": 25,
+        "innerRadiusFraction": 0.95,
+        "defaultSpeed": 1,
+        "dynamicSpeeds": true,
+        "speeds": [
+          0.75,
+          1,
+          1.25,
+          1.5,
+          1.75,
+          2
+        ]
+      }
+    },
+    {
+      "config": "DA_ControlZoneConfig_SniperShowdown_NorthAmerica",
+      "mode": "SniperShowdown",
+      "zone": {
+        "center": [
+          -614.7751,
+          -2458.5694,
+          36.4091
+        ],
+        "extents": [
+          350,
+          350,
+          170
+        ],
+        "shape": "Cylinder",
+        "hotZone": {
+          "extents": [
+            75,
+            75,
+            170
+          ],
+          "shape": "Cylinder"
+        }
+      },
+      "alternatives": [],
+      "hotZoneMovement": {
+        "firstMoveDelay": 0,
+        "moveDelay": 0,
+        "innerRadiusFraction": 0.95,
+        "defaultSpeed": 1.5,
+        "dynamicSpeeds": true,
+        "speeds": [
+          1.25,
+          1.5,
+          2,
+          2.25,
+          2.75,
+          3
+        ]
+      }
+    }
+  ]
+}

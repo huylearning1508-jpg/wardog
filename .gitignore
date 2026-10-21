@@ -1,0 +1,16 @@
+# Build & dependencies
+node_modules/
+.cache/
+
+# Raw datamining and large archive dumps (over 100MB)
+wardogs-data/
+wardogs-data-main/
+wardogs-data-main.zip
+raw_heightmaps/
+tools/
+*.zip
+*.tar.gz
+
+# System files
+.DS_Store
+Thumbs.db
