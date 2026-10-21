@@ -69,6 +69,9 @@
       <button class="action-btn" id="copySolutionBtn" title="Sao chép thông số bắn gửi cho đồng đội">
         📋 Sao Chép
       </button>
+      <button class="action-btn highlight-aim-nav" id="btnTopAimOverlay" title="Mở thước ngắm đè toàn màn hình (Phím Z)">
+        🎯 NGẮM
+      </button>
     </div>
   </header>
 
@@ -164,6 +167,10 @@
         <button class="btn-primary" id="saveTargetBtn">
           💾 Lưu Mục Tiêu Này Vào Danh Sách
         </button>
+
+        <button class="btn-aim-overlay pulse-glow" id="btnLiveAimOverlay">
+          🎯 NGẮM (BẬT THƯỚC NGẮM ĐÈ MÀN HÌNH)
+        </button>
       </div>
 
       <!-- TAB 2: MANUAL COORDINATES INPUT -->
@@ -208,6 +215,11 @@
           ✅ Áp Dụng Tọa Độ Lên Bản Đồ
         </button>
 
+        <!-- NÚT "NGẮM" XUẤT HIỆN KHI ĐÃ NHẬP TỌA ĐỘ ĐẦY ĐỦ -->
+        <button class="btn-aim-overlay pulse-glow" id="btnAimOverlay">
+          🎯 NGẮM (BẬT THƯỚC NGẮM ĐÈ MÀN HÌNH)
+        </button>
+
         <button class="action-btn" style="justify-content:center; padding:10px;" id="moveToTargetBtn">
           🚶 Đã tới nơi: Chuyển Súng tới vị trí Mục Tiêu
         </button>
@@ -231,6 +243,7 @@
       <div class="gunner-header">
         <span class="gunner-title" id="gunnerTitle">GUNNER SIGHT</span>
         <div class="gunner-controls">
+          <button class="gunner-icon-btn highlight-aim-icon" id="btnMiniSightAim" title="Phóng to thước ngắm đè toàn màn hình">🎯 NGẮM</button>
           <button class="gunner-icon-btn" id="gunnerMinBtn" title="Thu gọn / Mở rộng">⤢</button>
         </div>
       </div>
@@ -379,6 +392,165 @@
             <!-- Rendered by JS -->
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULLSCREEN SCOPE OVERLAY (DRAWS ON TOP OF ALL LAYERS: Z-INDEX 999999) -->
+  <div id="scope-overlay" class="scope-fullscreen-overlay hidden mode-vignette">
+    <!-- TOP CONTROL & STATUS BAR -->
+    <div class="scope-control-bar">
+      <div class="scope-bar-left">
+        <button class="scope-ctrl-btn scope-close-btn" id="closeScopeOverlayBtn" title="Thoát thước ngắm (Esc)">
+          ✕ THOÁT [ESC]
+        </button>
+        <div class="scope-target-pill" id="scopeTargetPill">
+          <span class="scope-target-icon">🎯</span>
+          <span id="scopeTargetSummary">MỤC TIÊU: ---M · --- MIL · HƯỚNG ---°</span>
+        </div>
+      </div>
+
+      <div class="scope-bar-center">
+        <span class="scope-instruction-text">
+          💡 <strong>HƯỚNG DẪN:</strong> Di chuyển nòng súng cối trong game cho đến khi thước ngắm trong game <strong>TRÙNG KHỚP</strong> với thước ngắm này
+        </span>
+      </div>
+
+      <div class="scope-bar-right">
+        <!-- BACKGROUND MODES -->
+        <div class="scope-mode-group">
+          <button class="scope-mode-btn active" data-bg="vignette" title="Nền tối ống ngắm">⬛ Nền Ngắm</button>
+          <button class="scope-mode-btn" data-bg="semitransparent" title="Nền bán trong suốt để nhìn mờ game">🏁 Nửa Trong</button>
+          <button class="scope-mode-btn" data-bg="transparent" title="Nền 100% trong suốt chỉ hiện vạch ngắm">🔍 Trong Suốt</button>
+        </div>
+
+        <!-- SCALE ADJUSTMENT -->
+        <div class="scope-scale-group">
+          <button class="scope-scale-btn" id="scopeScaleDownBtn" title="Thu nhỏ thước ngắm">➖</button>
+          <span id="scopeScaleDisplay" class="scope-scale-val">100%</span>
+          <button class="scope-scale-btn" id="scopeScaleUpBtn" title="Phóng to thước ngắm">➕</button>
+        </div>
+
+        <!-- DOCUMENT PICTURE-IN-PICTURE (ALWAYS ON TOP OS WINDOW) -->
+        <button class="scope-ctrl-btn scope-pip-btn" id="scopePipBtn" title="Mở cửa sổ ghim Always-On-Top đè lên game">
+          🖼️ Ghim PiP
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN SCOPE APERTURE & RETICLE VIEWPORT -->
+    <div class="scope-stage" id="scopeStage">
+      <!-- CIRCULAR VIGNETTE LENS -->
+      <div class="scope-aperture" id="scopeAperture">
+        <!-- UPPER SCOPE HEADING TAPE (MATCHING IN-GAME SCREENSHOT) -->
+        <div class="scope-top-heading-wrap">
+          <canvas id="scopeHeadingCanvas" width="460" height="34"></canvas>
+          <div class="scope-heading-center-box" id="scopeHeadingCenterBox">
+            <span id="scopeHeadingCenterText">201 S</span>
+          </div>
+        </div>
+
+        <!-- RETICLE BOX WITH 4 CORNERS ┌ ┐ └ ┘ -->
+        <div class="scope-reticle-box">
+          <div class="scope-corner sc-tl"></div>
+          <div class="scope-corner sc-tr"></div>
+          <div class="scope-corner sc-bl"></div>
+          <div class="scope-corner sc-br"></div>
+
+          <!-- INNER TOP SCALE OF RETICLE BOX -->
+          <div class="scope-box-top-scale" id="scopeBoxTopScale"></div>
+
+          <!-- RETICLE INTERIOR WITH LADDERS & CENTER CROSSHAIR -->
+          <div class="scope-reticle-interior">
+            <!-- LEFT RANGE LADDER (RNG) -->
+            <div class="scope-ladder-column scope-ladder-left">
+              <div class="scope-ladder-header">RNG</div>
+              <div class="scope-ladder-viewport">
+                <div class="scope-ladder-track" id="scopeLadderTrackLeft">
+                  <!-- Generated by JS for all 17 marks: 684..80 -->
+                </div>
+              </div>
+            </div>
+
+            <!-- CENTER CROSSHAIR RETICLE (FIXED AT CENTER) -->
+            <div class="scope-center-reticle-wrap">
+              <!-- Horizontal Target Alignment Guide Lines -->
+              <div class="scope-target-guideline-left" id="scopeGuidelineLeft"></div>
+              <div class="scope-target-guideline-right" id="scopeGuidelineRight"></div>
+
+              <!-- Reticle SVG Graphics: [ ⊙ ] with ┴ and ┬ -->
+              <svg class="scope-crosshair-svg" viewBox="0 0 160 160">
+                <!-- Center circle & dot -->
+                <circle cx="80" cy="80" r="5" fill="none" stroke="#4ade80" stroke-width="1.6" />
+                <circle cx="80" cy="80" r="1.2" fill="#4ade80" />
+                
+                <!-- Left bracket [ -->
+                <path d="M 68 70 L 62 70 L 62 90 L 68 90" fill="none" stroke="#4ade80" stroke-width="1.8" />
+                
+                <!-- Right bracket ] -->
+                <path d="M 92 70 L 98 70 L 98 90 L 92 90" fill="none" stroke="#4ade80" stroke-width="1.8" />
+                
+                <!-- Top post ┴ (vertical line with horizontal crossbar at base) -->
+                <line x1="80" y1="46" x2="80" y2="64" stroke="#4ade80" stroke-width="1.8" />
+                <line x1="72" y1="64" x2="88" y2="64" stroke="#4ade80" stroke-width="1.8" />
+                
+                <!-- Bottom post ┬ (vertical line with horizontal crossbar at top) -->
+                <line x1="80" y1="96" x2="80" y2="114" stroke="#4ade80" stroke-width="1.8" />
+                <line x1="72" y1="96" x2="88" y2="96" stroke="#4ade80" stroke-width="1.8" />
+              </svg>
+
+              <!-- Center Target Lock Badge -->
+              <div class="scope-center-badge" id="scopeCenterBadge">
+                <span id="scopeCenterDistText">187M</span>
+                <span class="scope-badge-sep">·</span>
+                <span id="scopeCenterMilText">800 MIL</span>
+              </div>
+            </div>
+
+            <!-- RIGHT MIL LADDER (MIL) -->
+            <div class="scope-ladder-column scope-ladder-right">
+              <div class="scope-ladder-header">MIL</div>
+              <div class="scope-ladder-viewport">
+                <div class="scope-ladder-track" id="scopeLadderTrackRight">
+                  <!-- Generated by JS for all 17 marks: 150..950 -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SPH-2 OVERLAY VIEW (ACTIVATED IF SPH-2 IS SELECTED) -->
+        <div class="scope-sph-box" id="scopeSphBox" style="display: none;">
+          <div class="scope-sph-reticle">
+            <div class="sph-crosshair-circle"></div>
+            <div class="sph-crosshair-lines"></div>
+            <div class="sph-target-tag" id="scopeSphTag">SPH-2 155MM FIRE CONTROL</div>
+          </div>
+        </div>
+
+        <!-- BOTTOM TARGET LOCK DATA BAR -->
+        <div class="scope-bottom-hud" id="scopeBottomHud">
+          <div class="scope-hud-card">
+            <span class="sh-k">CỰ LY ĐÃ BÙ</span>
+            <span class="sh-v highlight" id="scopeHudDist">187.0 M</span>
+            <span class="sh-s" id="scopeHudDistRaw">Thực: 180.2m · Bù: +6.8m</span>
+          </div>
+          <div class="scope-hud-card">
+            <span class="sh-k">THƯỚC NGẮM</span>
+            <span class="sh-v highlight-amber" id="scopeHudMil">800 MIL</span>
+            <span class="sh-s" id="scopeHudDeg">45.0° góc nòng</span>
+          </div>
+          <div class="scope-hud-card">
+            <span class="sh-k">HƯỚNG BẮN</span>
+            <span class="sh-v highlight-cyan" id="scopeHudBearing">201.2°</span>
+            <span class="sh-s" id="scopeHudCardinal">Nam (S)</span>
+          </div>
+          <div class="scope-hud-card">
+            <span class="sh-k">THỜI GIAN BAY</span>
+            <span class="sh-v" id="scopeHudToF">22.0 S</span>
+            <span class="sh-s">Chạm mục tiêu</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

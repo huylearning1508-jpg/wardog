@@ -1493,3 +1493,583 @@ html, body {
   background: #ef4444 !important;
   box-shadow: 0 0 8px #ef4444 !important;
 }
+
+/* ============================================================
+   AIM OVERLAY BUTTONS (APPEARS WHEN COORDINATES ENTERED)
+   ============================================================ */
+.btn-aim-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border: 1px solid #34d399;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 8px;
+}
+
+.btn-aim-overlay:hover {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  box-shadow: 0 6px 22px rgba(52, 211, 153, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-aim-overlay.pulse-glow {
+  animation: aimPulseGlow 1.8s infinite;
+}
+
+@keyframes aimPulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(52, 211, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+.highlight-aim-nav {
+  background: rgba(16, 185, 129, 0.25) !important;
+  color: #34d399 !important;
+  border-color: #10b981 !important;
+  font-weight: 800 !important;
+}
+
+.highlight-aim-nav:hover {
+  background: #10b981 !important;
+  color: #fff !important;
+}
+
+.highlight-aim-icon {
+  color: #34d399 !important;
+  font-weight: 800 !important;
+  border: 1px solid rgba(52, 211, 153, 0.4) !important;
+  padding: 2px 6px !important;
+  font-size: 0.72rem !important;
+}
+
+.highlight-aim-icon:hover {
+  background: rgba(52, 211, 153, 0.2) !important;
+  color: #fff !important;
+}
+
+/* ============================================================
+   FULLSCREEN SCOPE OVERLAY (DRAWS ON TOP OF ALL LAYERS: Z-INDEX 999999)
+   ============================================================ */
+.scope-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  user-select: none;
+  font-family: var(--font-mono);
+  transition: background 0.3s ease, opacity 0.25s ease;
+  overflow: hidden;
+}
+
+.scope-fullscreen-overlay.hidden {
+  display: none !important;
+}
+
+/* Background Modes */
+.scope-fullscreen-overlay.mode-vignette {
+  background: radial-gradient(circle at center, rgba(10, 15, 20, 0.55) 0%, rgba(5, 8, 12, 0.92) 65%, rgba(0, 0, 0, 0.98) 100%);
+  backdrop-filter: blur(2px);
+}
+
+.scope-fullscreen-overlay.mode-semitransparent {
+  background: rgba(8, 12, 18, 0.42);
+  backdrop-filter: blur(1px);
+}
+
+.scope-fullscreen-overlay.mode-transparent {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+/* TOP CONTROL BAR */
+.scope-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(10, 14, 20, 0.88);
+  border-bottom: 1px solid rgba(74, 222, 128, 0.25);
+  backdrop-filter: blur(8px);
+  z-index: 1000000;
+  gap: 12px;
+}
+
+.scope-bar-left, .scope-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scope-ctrl-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.scope-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.scope-close-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.scope-close-btn:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.scope-pip-btn {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.scope-pip-btn:hover {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.scope-target-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #4ade80;
+  white-space: nowrap;
+}
+
+.scope-instruction-text {
+  font-size: 0.72rem;
+  color: #fbbf24;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+  text-align: center;
+}
+
+.scope-mode-group, .scope-scale-group {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.scope-mode-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 5px 8px;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.scope-mode-btn.active {
+  background: rgba(74, 222, 128, 0.25);
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.scope-scale-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.scope-scale-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.scope-scale-val {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  padding: 0 4px;
+  min-width: 38px;
+  text-align: center;
+}
+
+/* MAIN STAGE */
+.scope-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.scope-aperture {
+  position: relative;
+  width: min(92vh, 850px);
+  height: min(92vh, 850px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: scale(var(--scope-scale, 1));
+  transform-origin: center center;
+  transition: transform 0.1s ease-out;
+}
+
+/* TOP SCOPE HEADING TAPE */
+.scope-top-heading-wrap {
+  position: absolute;
+  top: 30px;
+  width: 480px;
+  height: 38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+#scopeHeadingCanvas {
+  width: 100%;
+  height: 100%;
+}
+
+.scope-heading-center-box {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1.5px solid #4ade80;
+  border-radius: 3px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #4ade80;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* RETICLE BOX WITH 4 CORNERS ┌ ┐ └ ┘ */
+.scope-reticle-box {
+  position: relative;
+  width: 460px;
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* CORNER BRACKETS */
+.scope-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: #4ade80;
+  border-style: solid;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px rgba(74, 222, 128, 0.6));
+}
+.sc-tl { top: -2px; left: -2px; border-width: 2.5px 0 0 2.5px; }
+.sc-tr { top: -2px; right: -2px; border-width: 2.5px 2.5px 0 0; }
+.sc-bl { bottom: -2px; left: -2px; border-width: 0 0 2.5px 2.5px; }
+.sc-br { bottom: -2px; right: -2px; border-width: 0 2.5px 2.5px 0; }
+
+.scope-box-top-scale {
+  position: absolute;
+  top: 4px;
+  left: 30px;
+  right: 30px;
+  height: 16px;
+  border-bottom: 1px dashed rgba(74, 222, 128, 0.35);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 0.62rem;
+  color: #64748b;
+  padding: 0 8px;
+}
+
+/* RETICLE INTERIOR */
+.scope-reticle-interior {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+/* LADDER COLUMNS */
+.scope-ladder-column {
+  width: 90px;
+  height: 280px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scope-ladder-header {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.scope-ladder-viewport {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+}
+
+.scope-ladder-track {
+  position: absolute;
+  top: 125px; /* Centers anchor at vertical middle (50% of 250px) */
+  left: 0;
+  width: 100%;
+  height: 0;
+  transition: transform 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+  will-change: transform;
+}
+
+.scope-ladder-row {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.scope-ladder-left .scope-ladder-row {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.scope-ladder-right .scope-ladder-row {
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.scope-ladder-tick {
+  width: 14px;
+  height: 2px;
+  background: #334155;
+  border-radius: 1px;
+  transition: all 0.2s;
+}
+
+.scope-ladder-val {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+/* ACTIVE TARGET LOCK ON LADDER */
+.scope-ladder-row.target-locked .scope-ladder-val {
+  color: #4ade80;
+  font-weight: 900;
+  font-size: 0.88rem;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
+}
+
+.scope-ladder-row.target-locked .scope-ladder-tick {
+  width: 24px;
+  height: 2.5px;
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+}
+
+/* CENTER RETICLE ASSEMBLY */
+.scope-center-reticle-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.scope-crosshair-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.6));
+}
+
+/* TARGET HORIZONTAL GUIDELINES CONNECTING RETICLE TO LADDERS */
+.scope-target-guideline-left, .scope-target-guideline-right {
+  position: absolute;
+  top: 50%;
+  height: 1.5px;
+  background: rgba(74, 222, 128, 0.65);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.9);
+  transform: translateY(-50%);
+}
+.scope-target-guideline-left {
+  right: 100px;
+  width: 100px;
+}
+.scope-target-guideline-right {
+  left: 100px;
+  width: 100px;
+}
+
+.scope-center-badge {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 15, 20, 0.9);
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #4ade80;
+  white-space: nowrap;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.3);
+}
+
+.scope-badge-sep {
+  margin: 0 4px;
+  color: #64748b;
+}
+
+/* BOTTOM HUD STATUS */
+.scope-bottom-hud {
+  position: absolute;
+  bottom: 25px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(10, 14, 20, 0.92);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  border-radius: 6px;
+  padding: 8px 20px;
+  backdrop-filter: blur(8px);
+}
+
+.scope-hud-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sh-k {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.sh-v {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+
+.sh-s {
+  font-size: 0.65rem;
+  color: #64748b;
+}
+
+.sh-v.highlight { color: #4ade80; text-shadow: 0 0 8px rgba(74, 222, 128, 0.5); }
+.sh-v.highlight-amber { color: #f59e0b; text-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
+.sh-v.highlight-cyan { color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.5); }
+
+/* SPH-2 RETICLE IN SCOPE */
+.scope-sph-box {
+  position: relative;
+  width: 440px;
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.scope-sph-reticle {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sph-crosshair-circle {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border: 1.5px dashed rgba(56, 189, 248, 0.6);
+  border-radius: 50%;
+}
+
+.sph-crosshair-lines {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background:
+    linear-gradient(to right, transparent 48%, rgba(56, 189, 248, 0.7) 48%, rgba(56, 189, 248, 0.7) 52%, transparent 52%),
+    linear-gradient(to bottom, transparent 48%, rgba(56, 189, 248, 0.7) 48%, rgba(56, 189, 248, 0.7) 52%, transparent 52%);
+}
+
+.sph-target-tag {
+  position: absolute;
+  bottom: 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+}

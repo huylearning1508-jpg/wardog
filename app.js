@@ -248,6 +248,21 @@ const saveTargetBtn = document.getElementById('saveTargetBtn');
 const copySolutionBtn = document.getElementById('copySolutionBtn');
 const historyList = document.getElementById('historyList');
 
+// Aim Overlay Buttons & Container
+const btnAimOverlay = document.getElementById('btnAimOverlay');
+const btnLiveAimOverlay = document.getElementById('btnLiveAimOverlay');
+const btnTopAimOverlay = document.getElementById('btnTopAimOverlay');
+const btnMiniSightAim = document.getElementById('btnMiniSightAim');
+const scopeOverlay = document.getElementById('scope-overlay');
+const closeScopeOverlayBtn = document.getElementById('closeScopeOverlayBtn');
+const scopePipBtn = document.getElementById('scopePipBtn');
+const scopeScaleDownBtn = document.getElementById('scopeScaleDownBtn');
+const scopeScaleUpBtn = document.getElementById('scopeScaleUpBtn');
+const scopeScaleDisplay = document.getElementById('scopeScaleDisplay');
+const scopeAperture = document.getElementById('scopeAperture');
+let scopeScale = 1.0;
+let scopeBgMode = 'vignette';
+
 // Click mode buttons
 const setGunModeBtn = document.getElementById('setGunModeBtn');
 const setTargetModeBtn = document.getElementById('setTargetModeBtn');
@@ -610,6 +625,8 @@ function updateUI() {
 
   // Update In-Game Gunner Sight Simulation
   updateGunnerSight(s);
+  updateScopeOverlay(s);
+  checkCoordsFilled();
 }
 
 // 4b. DRAW HEADING TAPE (GUNNER SIGHT)
@@ -809,6 +826,271 @@ function updateGunnerSight(sol) {
         gunnerSubStats.classList.remove('out-of-range');
       }
     }
+  }
+}
+
+// ============================================================
+// 4e. FULLSCREEN AIMING SIGHT OVERLAY (Z-INDEX 999999 OVER ALL LAYERS)
+// ============================================================
+const SCOPE_LADDER_PX_PER_MIL = 0.9;
+
+function checkCoordsFilled() {
+  const gx = parseCoordInput(inputGunX.value);
+  const gy = parseCoordInput(inputGunY.value);
+  const tx = parseCoordInput(inputTargetX.value);
+  const ty = parseCoordInput(inputTargetY.value);
+  const isFilled = !isNaN(gx) && !isNaN(gy) && !isNaN(tx) && !isNaN(ty);
+
+  if (btnAimOverlay) {
+    btnAimOverlay.style.display = isFilled ? 'flex' : 'none';
+  }
+  if (btnTopAimOverlay) {
+    btnTopAimOverlay.style.display = isFilled ? 'flex' : 'none';
+  }
+  if (btnLiveAimOverlay) {
+    btnLiveAimOverlay.style.display = isFilled ? 'flex' : 'none';
+  }
+  return isFilled;
+}
+
+function initScopeOverlayLadder() {
+  const leftTrack = document.getElementById('scopeLadderTrackLeft');
+  const rightTrack = document.getElementById('scopeLadderTrackRight');
+  if (!leftTrack || !rightTrack) return;
+
+  leftTrack.innerHTML = LADDER_MARKS.map(m => {
+    const topPx = (950 - m.mil) * SCOPE_LADDER_PX_PER_MIL;
+    return `<div class="scope-ladder-row" data-mil="${m.mil}" data-range="${m.r}" style="top: ${topPx}px;">
+      <span class="scope-ladder-val">${m.r}M</span>
+      <span class="scope-ladder-tick"></span>
+    </div>`;
+  }).join('');
+
+  rightTrack.innerHTML = LADDER_MARKS.map(m => {
+    const topPx = (950 - m.mil) * SCOPE_LADDER_PX_PER_MIL;
+    return `<div class="scope-ladder-row" data-mil="${m.mil}" data-range="${m.r}" style="top: ${topPx}px;">
+      <span class="scope-ladder-tick"></span>
+      <span class="scope-ladder-val">${m.mil}</span>
+    </div>`;
+  }).join('');
+
+  const boxTopScale = document.getElementById('scopeBoxTopScale');
+  if (boxTopScale) {
+    boxTopScale.innerHTML = `
+      <span>165</span><span>|</span><span>180</span><span>|</span><span>195</span>
+      <span>|</span><span>210</span><span>|</span><span>225</span><span>|</span><span>240</span>
+    `;
+  }
+}
+
+function drawScopeHeadingTape(bearing, canvasEl = null) {
+  const canvas = canvasEl || document.getElementById('scopeHeadingCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const centerX = w / 2;
+  const pixelsPerDeg = 3.2;
+
+  const cardinalsMap = {
+    0: 'N', 45: 'NE', 90: 'E', 135: 'SE',
+    180: 'S', 225: 'SW', 270: 'W', 315: 'NW'
+  };
+
+  ctx.fillStyle = '#4ade80';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+
+  const minDeg = Math.floor(bearing - 60);
+  const maxDeg = Math.ceil(bearing + 60);
+
+  for (let deg = minDeg; deg <= maxDeg; deg++) {
+    const normDeg = ((deg % 360) + 360) % 360;
+    const x = centerX + (deg - bearing) * pixelsPerDeg;
+
+    if (x < -20 || x > w + 20) continue;
+
+    if (normDeg % 15 === 0) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 10);
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      const label = cardinalsMap[normDeg] || `${normDeg}`;
+      ctx.fillText(label, x, 22);
+    } else if (normDeg % 5 === 0) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 5);
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.5)';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+    }
+  }
+
+  const centerTextEl = document.getElementById('scopeHeadingCenterText');
+  if (centerTextEl) {
+    centerTextEl.textContent = `${Math.round(bearing)} ${getCardinal(bearing)}`;
+  }
+}
+
+function updateScopeOverlay(sol) {
+  if (!sol) return;
+
+  drawScopeHeadingTape(sol.bearing);
+
+  const scopeSphBox = document.getElementById('scopeSphBox');
+  const scopeReticleBox = document.querySelector('.scope-reticle-box');
+
+  if (sol.weapon === 'mortar') {
+    if (scopeSphBox) scopeSphBox.style.display = 'none';
+    if (scopeReticleBox) scopeReticleBox.style.display = 'flex';
+
+    const leftTrack = document.getElementById('scopeLadderTrackLeft');
+    const rightTrack = document.getElementById('scopeLadderTrackRight');
+    const currentMil = sol.mils || (sol.adjustedDistance <= 80 ? 950 : 150);
+    const clampedMil = Math.max(150, Math.min(950, currentMil));
+    const translateY = (clampedMil - 950) * SCOPE_LADDER_PX_PER_MIL;
+
+    if (leftTrack) leftTrack.style.transform = `translateY(${translateY}px)`;
+    if (rightTrack) rightTrack.style.transform = `translateY(${translateY}px)`;
+
+    document.querySelectorAll('.scope-ladder-row').forEach(row => {
+      const rowMil = parseFloat(row.dataset.mil);
+      const diff = Math.abs(rowMil - clampedMil);
+      row.classList.toggle('target-locked', diff <= 25);
+    });
+
+    const distText = document.getElementById('scopeCenterDistText');
+    const milText = document.getElementById('scopeCenterMilText');
+    if (distText) distText.textContent = `${Math.round(sol.adjustedDistance)}M`;
+    if (milText) milText.textContent = `${sol.mils || 150} MIL`;
+  } else {
+    // SPH-2 mode
+    if (scopeSphBox) scopeSphBox.style.display = 'flex';
+    if (scopeReticleBox) scopeReticleBox.style.display = 'none';
+    const tag = document.getElementById('scopeSphTag');
+    if (tag) {
+      tag.textContent = `SPH-2 155MM · BỔNG: ${sol.highMil || '---'} MIL · THẤP: ${sol.lowMil || '---'} MIL`;
+    }
+  }
+
+  // Bottom HUD
+  const hudDist = document.getElementById('scopeHudDist');
+  const hudDistRaw = document.getElementById('scopeHudDistRaw');
+  const hudMil = document.getElementById('scopeHudMil');
+  const hudDeg = document.getElementById('scopeHudDeg');
+  const hudBearing = document.getElementById('scopeHudBearing');
+  const hudCardinal = document.getElementById('scopeHudCardinal');
+  const hudToF = document.getElementById('scopeHudToF');
+  const targetSummary = document.getElementById('scopeTargetSummary');
+
+  if (hudDist) hudDist.textContent = `${sol.adjustedDistance.toFixed(1)} M`;
+  if (hudDistRaw) {
+    const compSign = sol.rangeCompensation >= 0 ? '+' : '';
+    hudDistRaw.textContent = `Thực: ${sol.dist2D.toFixed(1)}m · Bù: ${compSign}${sol.rangeCompensation.toFixed(1)}m`;
+  }
+  if (hudMil) {
+    hudMil.textContent = sol.weapon === 'sph2'
+      ? `${sol.highMil || '---'} MIL (Bổng)`
+      : `${sol.mils || '---'} MIL`;
+  }
+  if (hudDeg) {
+    hudDeg.textContent = sol.weapon === 'sph2'
+      ? `${sol.highDegrees || '---'}° nâng nòng`
+      : `${sol.elevDegrees || '---'}° nâng nòng`;
+  }
+  if (hudBearing) hudBearing.textContent = `${sol.bearing.toFixed(1)}°`;
+  if (hudCardinal) hudCardinal.textContent = sol.cardinal;
+  if (hudToF) hudToF.textContent = `${sol.tof} S`;
+
+  if (targetSummary) {
+    const mText = sol.weapon === 'sph2' ? `${sol.highMil} MIL` : `${sol.mils} MIL`;
+    targetSummary.textContent = `MỤC TIÊU: ${sol.adjustedDistance.toFixed(0)}M · ${mText} · HƯỚNG ${sol.bearing.toFixed(1)}° (${sol.cardinal})`;
+  }
+}
+
+function openScopeOverlay() {
+  // Apply any manual inputs currently in fields
+  const gx = parseCoordInput(inputGunX.value);
+  const gy = parseCoordInput(inputGunY.value);
+  const tx = parseCoordInput(inputTargetX.value);
+  const ty = parseCoordInput(inputTargetY.value);
+  if (!isNaN(gx) && !isNaN(gy) && gunMarker) gunMarker.setLatLng([gy, gx]);
+  if (!isNaN(tx) && !isNaN(ty) && targetMarker) targetMarker.setLatLng([ty, tx]);
+
+  updateUI();
+  if (currentSolution) updateScopeOverlay(currentSolution);
+
+  if (scopeOverlay) {
+    scopeOverlay.classList.remove('hidden');
+  }
+  showToast('🎯 Đã bật thước ngắm đè màn hình! Nhấn Esc để đóng.');
+}
+
+function closeScopeOverlay() {
+  if (scopeOverlay) {
+    scopeOverlay.classList.add('hidden');
+  }
+}
+
+async function toggleScopePictureInPicture() {
+  if (!('documentPictureInPicture' in window)) {
+    showToast('Trình duyệt chưa hỗ trợ Document PiP (khuyên dùng Chrome/Edge 116+)');
+    return;
+  }
+
+  if (window.documentPictureInPicture.window) {
+    window.documentPictureInPicture.window.close();
+    return;
+  }
+
+  try {
+    const pipWin = await window.documentPictureInPicture.requestWindow({
+      width: 700,
+      height: 560
+    });
+
+    [...document.styleSheets].forEach(sheet => {
+      try {
+        const cssRules = [...sheet.cssRules].map(r => r.cssText).join('');
+        const style = document.createElement('style');
+        style.textContent = cssRules;
+        pipWin.document.head.appendChild(style);
+      } catch (e) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = sheet.href;
+        pipWin.document.head.appendChild(link);
+      }
+    });
+
+    pipWin.document.body.style.margin = '0';
+    pipWin.document.body.style.padding = '0';
+    pipWin.document.body.style.background = '#080d14';
+    pipWin.document.body.style.overflow = 'hidden';
+
+    const stageEl = document.getElementById('scopeStage');
+    if (stageEl) {
+      const clone = stageEl.cloneNode(true);
+      clone.style.height = '100vh';
+      clone.style.width = '100vw';
+      pipWin.document.body.appendChild(clone);
+
+      const pipCanvas = clone.querySelector('#scopeHeadingCanvas');
+      if (pipCanvas && currentSolution) {
+        drawScopeHeadingTape(currentSolution.bearing, pipCanvas);
+      }
+    }
+
+    showToast('🖼️ Đã ghim thước ngắm Always-On-Top đè lên game!');
+  } catch (err) {
+    console.error('PiP Error:', err);
+    showToast(`Không thể mở PiP: ${err.message}`);
   }
 }
 
@@ -1456,13 +1738,72 @@ if (ladderSearchInput) {
   });
 }
 
-// Keyboard shortcuts (1: Gun, 2: Target, Space: Center, Esc: Cancel/Close Modal)
+// Scope Overlay buttons & controls
+if (btnAimOverlay) btnAimOverlay.addEventListener('click', openScopeOverlay);
+if (btnLiveAimOverlay) btnLiveAimOverlay.addEventListener('click', openScopeOverlay);
+if (btnTopAimOverlay) btnTopAimOverlay.addEventListener('click', openScopeOverlay);
+if (btnMiniSightAim) btnMiniSightAim.addEventListener('click', openScopeOverlay);
+if (closeScopeOverlayBtn) closeScopeOverlayBtn.addEventListener('click', closeScopeOverlay);
+if (scopePipBtn) scopePipBtn.addEventListener('click', toggleScopePictureInPicture);
+
+// Scope Background Mode switcher
+document.querySelectorAll('.scope-mode-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.scope-mode-btn').forEach(b => b.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    const mode = e.currentTarget.dataset.bg;
+    scopeBgMode = mode;
+    if (scopeOverlay) {
+      scopeOverlay.classList.remove('mode-vignette', 'mode-semitransparent', 'mode-transparent');
+      scopeOverlay.classList.add(`mode-${mode}`);
+    }
+  });
+});
+
+// Scope Scale controls
+if (scopeScaleDownBtn) {
+  scopeScaleDownBtn.addEventListener('click', () => {
+    scopeScale = Math.max(0.6, Math.round((scopeScale - 0.05) * 100) / 100);
+    if (scopeAperture) scopeAperture.style.setProperty('--scope-scale', scopeScale);
+    if (scopeScaleDisplay) scopeScaleDisplay.textContent = `${Math.round(scopeScale * 100)}%`;
+  });
+}
+
+if (scopeScaleUpBtn) {
+  scopeScaleUpBtn.addEventListener('click', () => {
+    scopeScale = Math.min(1.6, Math.round((scopeScale + 0.05) * 100) / 100);
+    if (scopeAperture) scopeAperture.style.setProperty('--scope-scale', scopeScale);
+    if (scopeScaleDisplay) scopeScaleDisplay.textContent = `${Math.round(scopeScale * 100)}%`;
+  });
+}
+
+// Input fields dynamic check for filled coordinates
+[inputGunX, inputGunY, inputTargetX, inputTargetY].forEach(inp => {
+  if (inp) {
+    inp.addEventListener('input', checkCoordsFilled);
+    inp.addEventListener('change', checkCoordsFilled);
+    inp.addEventListener('keyup', checkCoordsFilled);
+  }
+});
+
+// Keyboard shortcuts (1: Gun, 2: Target, Space: Center, Esc: Cancel/Close Modal, Z: Toggle Scope)
 window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && scopeOverlay && !scopeOverlay.classList.contains('hidden')) {
+    closeScopeOverlay();
+    return;
+  }
   if (e.key === 'Escape' && rangeLadderModal && !rangeLadderModal.classList.contains('hidden')) {
     rangeLadderModal.classList.add('hidden');
     return;
   }
   if (e.target.tagName === 'INPUT') return;
+  if ((e.key === 'z' || e.key === 'Z') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    if (scopeOverlay) {
+      if (scopeOverlay.classList.contains('hidden')) openScopeOverlay();
+      else closeScopeOverlay();
+    }
+    return;
+  }
   if (e.key === '1') setGunModeBtn.click();
   else if (e.key === '2') setTargetModeBtn.click();
   else if (e.key === ' ') { e.preventDefault(); centerViewBtn.click(); }
@@ -1472,5 +1813,7 @@ window.addEventListener('keydown', (e) => {
 // INIT ON PAGE LOAD
 window.addEventListener('DOMContentLoaded', () => {
   initGunnerSightLadder();
+  initScopeOverlayLadder();
+  checkCoordsFilled();
   loadMap('kavkazi');
 });
