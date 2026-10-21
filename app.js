@@ -94,7 +94,6 @@ const footerPos = document.getElementById('footer-pos');
 const footerElev = document.getElementById('footer-elev');
 const hudPanel = document.getElementById('hud-panel');
 const hudToggleBtn = document.getElementById('hud-toggle-btn');
-const themeToggleBtn = document.getElementById('themeToggleBtn');
 
 // Solution displays
 const heroFiringRange = document.getElementById('heroFiringRange');
@@ -696,15 +695,6 @@ centerViewBtn.addEventListener('click', () => {
   const bounds = L.latLngBounds(gunMarker.getLatLng(), targetMarker.getLatLng());
   map.fitBounds(bounds, { padding: [80, 80] });
 });
-
-// Color / Monochrome Theme Toggle
-if (themeToggleBtn) {
-  themeToggleBtn.addEventListener('click', () => {
-    const isColor = document.body.classList.toggle('color-map-mode');
-    themeToggleBtn.textContent = isColor ? '🎨 Màu Gốc' : '🌓 Trắng Đen';
-    showToast(isColor ? 'Đã bật bản đồ Màu Gốc' : 'Đã bật bản đồ Trắng Đen');
-  });
-}
 
 // 8. FORM CONTROLS & LISTENERS
 applyCoordsBtn.addEventListener('click', () => {

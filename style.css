@@ -178,15 +178,10 @@ html, body {
 }
 
 /* ============================================================
-   MONOCHROME / BLACK & WHITE MAP FILTER (METAFORGE STYLE)
+   PERMANENT MONOCHROME / BLACK & WHITE MAP (METAFORGE STYLE)
    ============================================================ */
 .leaflet-image-layer {
-  filter: grayscale(100%) contrast(145%) brightness(82%);
-  transition: filter 0.3s ease;
-}
-
-body.color-map-mode .leaflet-image-layer {
-  filter: none;
+  filter: grayscale(100%) contrast(150%) brightness(78%) !important;
 }
 
 /* ============================================================
