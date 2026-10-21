@@ -851,6 +851,13 @@ function setSphArc(mode) {
   updateUI();
 }
 
+// Custom Leaflet CRS with origin (0,0) at bottom-left corner of the map
+function getBottomLeftCRS(height) {
+  return L.extend({}, L.CRS.Simple, {
+    transformation: new L.Transformation(1, 0, -1, height)
+  });
+}
+
 // 6. MAP INITIALIZATION & SWITCHING
 async function loadMap(mapKey) {
   const cfg = MAP_CONFIGS[mapKey];
@@ -877,7 +884,7 @@ async function loadMap(mapKey) {
 
   if (!map) {
     map = L.map('map', {
-      crs: L.CRS.Simple,
+      crs: getBottomLeftCRS(cfg.height),
       minZoom: -3,
       maxZoom: 3,
       zoomSnap: 0.25,
@@ -908,6 +915,8 @@ async function loadMap(mapKey) {
         showToast("Đã đặt vị trí Mục tiêu [T]!");
       }
     });
+  } else {
+    map.options.crs = getBottomLeftCRS(cfg.height);
   }
 
   // Update image overlay
