@@ -96,23 +96,24 @@ let sphArcMode = 'auto'; // 'auto', 'high', 'low'
 let modalWeaponKey = 'mortar';
 
 // L81 MORTAR VERIFIED BALLISTIC FIRING TABLE (80m - 684m)
+// Strictly anchored to the 17 verified in-game graduations (150 MIL to 950 MIL in 50 MIL steps)
 const L81_FIRING_TABLE = [
-  [80, 950], [87, 940], [93, 930], [99, 920], [105, 910],
-  [110, 900], [115, 890], [118, 880], [122, 870], [127, 860],
-  [132, 850], [140, 840], [151, 830], [163, 820], [175, 810],
-  [187, 800], [198, 790], [208, 780], [219, 770], [229, 760],
-  [239, 750], [250, 740], [260, 730], [270, 720], [280, 710],
-  [290, 700], [300, 690], [310, 680], [319, 670], [329, 660],
-  [339, 650], [348, 640], [358, 630], [367, 620], [376, 610],
-  [385, 600], [394, 590], [403, 580], [412, 570], [420, 560],
-  [429, 550], [437, 540], [446, 530], [454, 520], [462, 510],
-  [470, 500], [478, 490], [486, 480], [494, 470], [501, 460],
-  [509, 450], [516, 440], [524, 430], [531, 420], [538, 410],
-  [545, 400], [552, 390], [559, 380], [565, 370], [572, 360],
-  [578, 350], [585, 340], [591, 330], [597, 320], [603, 310],
-  [609, 300], [615, 290], [620, 280], [626, 270], [631, 260],
-  [636, 250], [641, 240], [646, 230], [651, 220], [656, 210],
-  [661, 200], [666, 190], [670, 180], [675, 170], [680, 160],
+  [80, 950],
+  [110, 900],
+  [132, 850],
+  [187, 800],
+  [240, 750],
+  [290, 700],
+  [340, 650],
+  [385, 600],
+  [430, 550],
+  [470, 500],
+  [510, 450],
+  [545, 400],
+  [578, 350],
+  [609, 300],
+  [637, 250],
+  [661, 200],
   [684, 150]
 ];
 
@@ -663,23 +664,24 @@ function drawHeadingTape(bearing) {
 }
 
 // 4c. ELEVATION LADDER MARKS FOR MORTAR (80m / 950 MIL to 684m / 150 MIL)
+// Strictly 17 exact marks from in-game sight reticle: 80, 110, 132, 187, 240, 290, 340, 385, 430, 470, 510, 545, 578, 609, 637, 661, 684
 const LADDER_MARKS = [
   { mil: 950, r: 80, hasLabel: true },
-  { mil: 900, r: 110, hasLabel: false },
+  { mil: 900, r: 110, hasLabel: true },
   { mil: 850, r: 132, hasLabel: true },
   { mil: 800, r: 187, hasLabel: true },
   { mil: 750, r: 240, hasLabel: true },
-  { mil: 700, r: 290, hasLabel: false },
+  { mil: 700, r: 290, hasLabel: true },
   { mil: 650, r: 340, hasLabel: true },
-  { mil: 600, r: 385, hasLabel: false },
-  { mil: 550, r: 429, hasLabel: true },
-  { mil: 500, r: 470, hasLabel: false },
-  { mil: 450, r: 509, hasLabel: true },
-  { mil: 400, r: 545, hasLabel: false },
+  { mil: 600, r: 385, hasLabel: true },
+  { mil: 550, r: 430, hasLabel: true },
+  { mil: 500, r: 470, hasLabel: true },
+  { mil: 450, r: 510, hasLabel: true },
+  { mil: 400, r: 545, hasLabel: true },
   { mil: 350, r: 578, hasLabel: true },
-  { mil: 300, r: 609, hasLabel: false },
-  { mil: 250, r: 636, hasLabel: true },
-  { mil: 200, r: 661, hasLabel: false },
+  { mil: 300, r: 609, hasLabel: true },
+  { mil: 250, r: 637, hasLabel: true },
+  { mil: 200, r: 661, hasLabel: true },
   { mil: 150, r: 684, hasLabel: true }
 ];
 
@@ -1310,7 +1312,20 @@ function renderLadderTable(filterText = '') {
       `;
     }
 
-    const rowsHtml = L81_FIRING_TABLE.map(([r, mil]) => {
+    // Find closest mark to active solution
+    let closestMortarIdx = -1;
+    let minMortarDiff = Infinity;
+    if (currentSolution && currentSolution.weapon === 'mortar' && currentSolution.inRange) {
+      L81_FIRING_TABLE.forEach(([r], idx) => {
+        const diff = Math.abs(currentSolution.adjustedDistance - r);
+        if (diff < minMortarDiff) {
+          minMortarDiff = diff;
+          closestMortarIdx = idx;
+        }
+      });
+    }
+
+    const rowsHtml = L81_FIRING_TABLE.map(([r, mil], idx) => {
       const tof = (10.0 + mil * 0.01494).toFixed(1);
       const elevDeg = (mil * 0.05625).toFixed(1);
       let trait = 'Tầm trung chuẩn';
@@ -1324,7 +1339,7 @@ function renderLadderTable(filterText = '') {
         if (!match) return '';
       }
 
-      const isActive = currentSolution && currentSolution.weapon === 'mortar' && currentSolution.inRange && Math.abs(currentSolution.adjustedDistance - r) < 6;
+      const isActive = idx === closestMortarIdx;
 
       return `
         <tr class="${isActive ? 'active-bracket' : ''}">

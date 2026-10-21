@@ -929,7 +929,7 @@ html, body {
 
 /* ELEVATION LADDER SCROLLING VIEWPORTS (LEFT & RIGHT) */
 .gunner-ladder-viewport {
-  width: 48px;
+  width: 52px;
   height: 150px;
   position: relative;
   overflow: hidden;
@@ -955,6 +955,7 @@ html, body {
   display: flex;
   align-items: center;
   transform: translateY(-50%);
+  white-space: nowrap;
 }
 
 .ladder-left-viewport .ladder-row {
@@ -988,6 +989,7 @@ html, body {
   font-weight: 700;
   color: #64748b;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 /* HIGHLIGHT ROW WHEN NEAR CENTER NEEDLE */
