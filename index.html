@@ -44,6 +44,9 @@
 
     <!-- ACTION BUTTONS -->
     <div class="nav-actions">
+      <button class="action-btn" id="rangeLadderBtn" title="Xem bảng bắn Range Ladder (80m - 684m)">
+        📊 Range Ladder
+      </button>
       <button class="action-btn" id="setGunModeBtn" title="Nhấn vào đây rồi click trên map để đặt Súng (Phím 1)">
         💥 Đặt Súng [1]
       </button>
@@ -235,7 +238,7 @@
         <!-- CENTER SIGHT & LADDERS -->
         <div class="gunner-center-stage">
           <!-- LEFT: RANGE LADDER -->
-          <div class="gunner-ladder ladder-left">
+          <div class="gunner-ladder ladder-left" id="ladderLeftMarks">
             <div class="ladder-mark" style="top: 12%"><span class="ladder-num">80</span><span class="ladder-dash"></span></div>
             <div class="ladder-mark" style="top: 32%"><span class="ladder-num">132</span><span class="ladder-dash"></span></div>
             <div class="ladder-mark" style="top: 52%"><span class="ladder-num">187</span><span class="ladder-dash"></span></div>
@@ -259,7 +262,7 @@
           </div>
 
           <!-- RIGHT: MIL LADDER -->
-          <div class="gunner-ladder ladder-right">
+          <div class="gunner-ladder ladder-right" id="ladderRightMarks">
             <div class="ladder-mark" style="top: 12%"><span class="ladder-dash"></span><span class="ladder-num">950</span></div>
             <div class="ladder-mark" style="top: 32%"><span class="ladder-dash"></span><span class="ladder-num">850</span></div>
             <div class="ladder-mark" style="top: 52%"><span class="ladder-dash"></span><span class="ladder-num">800</span></div>
@@ -292,6 +295,60 @@
   <div id="loading-overlay">
     <div class="spinner"></div>
     <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-cyan);">ĐANG TẢI DỮ LIỆU ĐỊA HÌNH 3D & BẢN ĐỒ...</div>
+  </div>
+
+  <!-- RANGE LADDER MODAL -->
+  <div id="range-ladder-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-icon">📊</span>
+          <span>L81 MORTAR RANGE LADDER (THƯỚC NGẮM & BẢNG BẮN CỐI)</span>
+        </div>
+        <button class="modal-close-btn" id="closeLadderModalBtn" title="Đóng bảng">✕</button>
+      </div>
+
+      <div class="modal-summary">
+        <div class="summary-pill">
+          <span class="pill-k">CỰ LY BẮN HIỆU QUẢ</span>
+          <span class="pill-v">80 m — 684 m</span>
+        </div>
+        <div class="summary-pill">
+          <span class="pill-k">THƯỚC NGẮM (ELEVATION)</span>
+          <span class="pill-v">950 MIL → 150 MIL</span>
+        </div>
+        <div class="summary-pill">
+          <span class="pill-k">TỶ LỆ BÙ CAO ĐỘ (SLOPE)</span>
+          <span class="pill-v">ΔD ≈ +0.532 × ΔZ</span>
+        </div>
+        <div class="summary-pill">
+          <span class="pill-k">THỜI GIAN BAY (ToF)</span>
+          <span class="pill-v">12.2 s — 24.2 s</span>
+        </div>
+      </div>
+
+      <div class="modal-filter-bar">
+        <input type="text" id="ladderSearchInput" placeholder="🔍 Tìm cự ly hoặc số MIL (ví dụ: 176, 340, 810)..." />
+        <span class="ladder-hint">💡 Quy tắc ngắm: Cự ly càng gần thì số MIL càng lớn (nâng nòng dốc). Cự ly xa số MIL càng nhỏ.</span>
+      </div>
+
+      <div class="modal-table-container">
+        <table class="ladder-table">
+          <thead>
+            <tr>
+              <th>CỰ LY (M)</th>
+              <th>THƯỚC NGẮM (MIL)</th>
+              <th>THỜI GIAN BAY (ToF)</th>
+              <th>GÓC TÀ LA BÀN</th>
+              <th>ĐẶC ĐIỂM QUỸ ĐẠO</th>
+            </tr>
+          </thead>
+          <tbody id="ladderTableBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div class="copied-toast" id="toast">Đã sao chép!</div>

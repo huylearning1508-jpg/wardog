@@ -975,3 +975,226 @@ html, body {
     display: none;
   }
 }
+
+/* ============================================================
+   RANGE LADDER MODAL & FIRING TABLE
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.modal-overlay.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-card {
+  background: #0d141e;
+  border: 1px solid #223247;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(0, 229, 255, 0.15);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(15, 23, 36, 0.95);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #fff;
+}
+
+.modal-icon {
+  font-size: 1.1rem;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.modal-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  padding: 12px 18px;
+  background: rgba(10, 16, 26, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.summary-pill {
+  background: rgba(18, 28, 44, 0.7);
+  border: 1px solid rgba(34, 50, 71, 0.8);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summary-pill .pill-k {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.summary-pill .pill-v {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+}
+
+.modal-filter-bar {
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(13, 20, 30, 0.9);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-filter-bar input {
+  background: #090e16;
+  border: 1px solid #223247;
+  color: #f1f5f9;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  outline: none;
+}
+
+.modal-filter-bar input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+}
+
+.ladder-hint {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.modal-table-container {
+  overflow-y: auto;
+  flex: 1;
+  max-height: 55vh;
+}
+
+.ladder-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.ladder-table thead {
+  position: sticky;
+  top: 0;
+  background: #111a26;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.ladder-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ladder-table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+}
+
+.ladder-table tr:hover td {
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.ladder-table tr.active-bracket td {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-amber);
+  font-weight: bold;
+}
+
+.ladder-table .col-range {
+  font-weight: 800;
+  color: #fff;
+}
+
+.ladder-table .col-mil {
+  color: #4ade80;
+  font-weight: 800;
+}
+
+.ladder-table .col-tof {
+  color: #38bdf8;
+}
+
+.badge-tag-bracket {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+}
+
+/* OUT OF RANGE RED WARNING STATE */
+.gunner-readout-main.out-of-range {
+  color: #ef4444 !important;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.5) !important;
+}
+
+.gunner-readout-sub.out-of-range {
+  color: #ef4444 !important;
+}
+
+.ladder-indicator.out-of-range {
+  background: #ef4444 !important;
+  box-shadow: 0 0 8px #ef4444 !important;
+}

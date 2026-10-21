@@ -81,7 +81,83 @@ let gunMarker = null;
 let targetMarker = null;
 let trajectoryLine = null;
 let gunRangeCircle = null;
+let gunMinRangeCircle = null;
+let gunMaxRangeCircle = null;
 let objectivesLayer = null;
+
+// L81 MORTAR VERIFIED BALLISTIC FIRING TABLE (80m - 684m)
+// Source: Community extracted & verified data assets (apollyon-sys & MetaForge)
+const L81_FIRING_TABLE = [
+  [80, 950], [87, 940], [93, 930], [99, 920], [105, 910],
+  [110, 900], [115, 890], [118, 880], [122, 870], [127, 860],
+  [132, 850], [140, 840], [151, 830], [163, 820], [175, 810],
+  [187, 800], [198, 790], [208, 780], [219, 770], [229, 760],
+  [239, 750], [250, 740], [260, 730], [270, 720], [280, 710],
+  [290, 700], [300, 690], [310, 680], [319, 670], [329, 660],
+  [339, 650], [348, 640], [358, 630], [367, 620], [376, 610],
+  [385, 600], [394, 590], [403, 580], [412, 570], [420, 560],
+  [429, 550], [437, 540], [446, 530], [454, 520], [462, 510],
+  [470, 500], [478, 490], [486, 480], [494, 470], [501, 460],
+  [509, 450], [516, 440], [524, 430], [531, 420], [538, 410],
+  [545, 400], [552, 390], [559, 380], [565, 370], [572, 360],
+  [578, 350], [585, 340], [591, 330], [597, 320], [603, 310],
+  [609, 300], [615, 290], [620, 280], [626, 270], [631, 260],
+  [636, 250], [641, 240], [646, 230], [651, 220], [656, 210],
+  [661, 200], [666, 190], [670, 180], [675, 170], [680, 160],
+  [684, 150]
+];
+
+function getMortarElevation(distanceMeters) {
+  const minMeters = 80;
+  const maxMeters = 684;
+
+  if (distanceMeters < minMeters) {
+    return {
+      inRange: false,
+      mil: 950,
+      status: 'DƯỚI CỰ LY TỐI THIỂU (<80m)',
+      warning: 'DƯỚI 80M (QUÁ GẦN)'
+    };
+  }
+  if (distanceMeters > maxMeters) {
+    return {
+      inRange: false,
+      mil: 150,
+      status: 'VƯỢT CỰ LY TỐI ĐA (>684m)',
+      warning: 'VƯỢT 684M (QUÁ XA)'
+    };
+  }
+
+  // Exact match
+  for (let i = 0; i < L81_FIRING_TABLE.length; i++) {
+    if (Math.abs(L81_FIRING_TABLE[i][0] - distanceMeters) < 0.001) {
+      return {
+        inRange: true,
+        mil: L81_FIRING_TABLE[i][1],
+        status: 'TRONG TẦM BẮN',
+        warning: null
+      };
+    }
+  }
+
+  // Piecewise linear interpolation
+  for (let i = 0; i < L81_FIRING_TABLE.length - 1; i++) {
+    const left = L81_FIRING_TABLE[i];
+    const right = L81_FIRING_TABLE[i + 1];
+    if (distanceMeters >= left[0] && distanceMeters <= right[0]) {
+      const factor = (distanceMeters - left[0]) / (right[0] - left[0]);
+      const mil = left[1] + factor * (right[1] - left[1]);
+      return {
+        inRange: true,
+        mil,
+        status: 'TRONG TẦM BẮN',
+        warning: null
+      };
+    }
+  }
+
+  return { inRange: false, mil: null, status: 'UNKNOWN', warning: null };
+}
 
 let clickMode = null; // 'gun', 'target', or null
 let currentSolution = null;
@@ -212,19 +288,17 @@ function calculateBallistics(gunPos, targetPos) {
   // Delta distance compensation: ΔD = ΔZ / tan(62°) ≈ 0.532 * ΔZ
   const tanImpactAngle = 1.88;
   const rangeCompensation = deltaZ / tanImpactAngle;
-  const adjustedDistance = Math.max(50, dist2D + rangeCompensation);
+  const adjustedDistance = dist2D + rangeCompensation;
 
-  // Mil Calculation for standard 81mm mortar (approx 800 - 1550 mils):
-  const clampedRange = Math.min(1250, Math.max(50, adjustedDistance));
-  const tNorm = (clampedRange - 50) / 1200; // 0 to 1
-  const mils = Math.round(1550 - tNorm * 750);
-  const elevDegrees = (mils * (360 / 6400)).toFixed(1);
-
-  // Time of flight (approx 12s to 26s)
-  const tof = (11.0 + tNorm * 15.0).toFixed(1);
+  // L81 Range Ladder & Firing Table solution (80m - 684m)
+  const elevSol = getMortarElevation(adjustedDistance);
+  const inRange = elevSol.inRange;
+  const mils = elevSol.mil !== null ? Math.round(elevSol.mil) : null;
+  const elevDegrees = mils !== null ? (mils * 0.05625).toFixed(1) : '---';
+  const tof = mils !== null ? (10.0 + mils * 0.01494).toFixed(1) : '--.-';
 
   // Apex altitude
-  const apexRise = 40 + tNorm * 280;
+  const apexRise = inRange ? 40 + ((adjustedDistance - 80) / 604) * 260 : 40;
   const apexZ = Math.max(zGun, zTarget) + apexRise;
 
   return {
@@ -241,7 +315,10 @@ function calculateBallistics(gunPos, targetPos) {
     mils,
     elevDegrees,
     tof,
-    apexZ
+    apexZ,
+    inRange,
+    status: elevSol.status,
+    warning: elevSol.warning
   };
 }
 
@@ -255,7 +332,11 @@ function updateUI() {
   currentSolution = calculateBallistics(gunLatLng, targetLatLng);
 
   // Hero numbers
-  heroFiringRange.innerHTML = `${currentSolution.adjustedDistance.toFixed(1)} <span class="hero-unit">m</span>`;
+  if (currentSolution.inRange) {
+    heroFiringRange.innerHTML = `${currentSolution.adjustedDistance.toFixed(1)} <span class="hero-unit">m</span>`;
+  } else {
+    heroFiringRange.innerHTML = `<span style="color:#ef4444; font-size:1.4rem;">${currentSolution.warning || 'NGOÀI TẦM'}</span>`;
+  }
   heroFlatDist.textContent = `Thực: ${currentSolution.dist2D.toFixed(1)} m`;
 
   const compSign = currentSolution.rangeCompensation >= 0 ? '+' : '';
@@ -266,11 +347,17 @@ function updateUI() {
   solBearing.textContent = `${Math.round(currentSolution.bearing)}°`;
   solCardinal.textContent = `${currentSolution.cardinal} (${currentSolution.bearing.toFixed(1)}°)`;
 
-  solElevationMils.textContent = `${currentSolution.mils}`;
-  solElevationDeg.textContent = `${currentSolution.elevDegrees}° nâng nòng`;
-
-  solToF.textContent = `~${currentSolution.tof}s`;
-  solApex.textContent = `+${Math.round(currentSolution.apexZ)}m`;
+  if (currentSolution.inRange) {
+    solElevationMils.textContent = `${currentSolution.mils}`;
+    solElevationDeg.textContent = `${currentSolution.elevDegrees}° nâng nòng`;
+    solToF.textContent = `~${currentSolution.tof}s`;
+    solApex.textContent = `+${Math.round(currentSolution.apexZ)}m`;
+  } else {
+    solElevationMils.textContent = `---`;
+    solElevationDeg.textContent = currentSolution.status;
+    solToF.textContent = `---`;
+    solApex.textContent = `---`;
+  }
 
   // Details
   gunCoordsDisplay.textContent = `X: ${currentSolution.gun.x.toFixed(1)}, Y: ${currentSolution.gun.y.toFixed(1)} (Z: ${currentSolution.gun.z.toFixed(1)}m)`;
@@ -291,10 +378,19 @@ function updateUI() {
     );
   }
 
-  // Update Amber Target Range Circle centered at G touching T
+  // Update Gun Range Rings: Min (80m), Max (684m), and Target Distance
+  if (gunMinRangeCircle) {
+    gunMinRangeCircle.setLatLng(gunLatLng);
+  }
+  if (gunMaxRangeCircle) {
+    gunMaxRangeCircle.setLatLng(gunLatLng);
+  }
   if (gunRangeCircle) {
     gunRangeCircle.setLatLng(gunLatLng);
     gunRangeCircle.setRadius(currentSolution.dist2D);
+    gunRangeCircle.setStyle({
+      color: currentSolution.inRange ? '#f59e0b' : '#ef4444'
+    });
   }
 
   // Redraw Terrain Cross-Section Canvas
@@ -442,39 +538,93 @@ function updateGunnerSight(sol) {
 
   drawHeadingTape(sol.bearing);
 
-  const ladderIndLeft = document.getElementById('ladderIndLeft');
-  const ladderIndRight = document.getElementById('ladderIndRight');
+  const ladderLeftMarks = document.getElementById('ladderLeftMarks');
+  const ladderRightMarks = document.getElementById('ladderRightMarks');
   const gunnerMainDist = document.getElementById('gunnerMainDist');
   const gunnerSubStats = document.getElementById('gunnerSubStats');
   const targetCoordBadge = document.getElementById('target-coord-badge');
 
-  // Stops: 80m -> 12%, 132m -> 32%, 187m -> 52%, 240m -> 72%, 340m -> 90%
-  const stops = [
-    { r: 80, pct: 12 },
-    { r: 132, pct: 32 },
-    { r: 187, pct: 52 },
-    { r: 240, pct: 72 },
-    { r: 340, pct: 90 }
+  // Select dynamic bracket based on distance
+  let currentBracket = 1;
+  const dist = sol.adjustedDistance;
+  if (dist > 480) currentBracket = 3;
+  else if (dist > 300) currentBracket = 2;
+
+  const bracketMarks = currentBracket === 1 ? [
+    { r: 80, mil: 950, pct: 12 },
+    { r: 132, mil: 850, pct: 32 },
+    { r: 187, mil: 800, pct: 52 },
+    { r: 240, mil: 750, pct: 72 },
+    { r: 340, mil: 650, pct: 90 }
+  ] : currentBracket === 2 ? [
+    { r: 240, mil: 750, pct: 12 },
+    { r: 300, mil: 690, pct: 32 },
+    { r: 358, mil: 630, pct: 52 },
+    { r: 420, mil: 560, pct: 72 },
+    { r: 486, mil: 480, pct: 90 }
+  ] : [
+    { r: 446, mil: 530, pct: 12 },
+    { r: 509, mil: 450, pct: 32 },
+    { r: 572, mil: 360, pct: 52 },
+    { r: 631, mil: 260, pct: 72 },
+    { r: 684, mil: 150, pct: 90 }
   ];
+
+  // Re-render marks when bracket changes
+  if (ladderLeftMarks && ladderRightMarks && ladderLeftMarks.dataset.bracket !== String(currentBracket)) {
+    ladderLeftMarks.dataset.bracket = String(currentBracket);
+    ladderLeftMarks.innerHTML = bracketMarks.map(b =>
+      `<div class="ladder-mark" style="top: ${b.pct}%"><span class="ladder-num">${b.r}</span><span class="ladder-dash"></span></div>`
+    ).join('') + `<div class="ladder-indicator indicator-left" id="ladderIndLeft"></div>`;
+
+    ladderRightMarks.innerHTML = bracketMarks.map(b =>
+      `<div class="ladder-mark" style="top: ${b.pct}%"><span class="ladder-dash"></span><span class="ladder-num">${b.mil}</span></div>`
+    ).join('') + `<div class="ladder-indicator indicator-right" id="ladderIndRight"></div>`;
+  }
+
+  // Calculate indicator position
   let topPct = 52;
-  const r = sol.adjustedDistance;
-  if (r <= stops[0].r) topPct = stops[0].pct;
-  else if (r >= stops[stops.length - 1].r) topPct = stops[stops.length - 1].pct;
+  if (dist <= bracketMarks[0].r) topPct = bracketMarks[0].pct;
+  else if (dist >= bracketMarks[bracketMarks.length - 1].r) topPct = bracketMarks[bracketMarks.length - 1].pct;
   else {
-    for (let i = 0; i < stops.length - 1; i++) {
-      if (r >= stops[i].r && r <= stops[i+1].r) {
-        const t = (r - stops[i].r) / (stops[i+1].r - stops[i].r);
-        topPct = stops[i].pct + t * (stops[i+1].pct - stops[i].pct);
+    for (let i = 0; i < bracketMarks.length - 1; i++) {
+      if (dist >= bracketMarks[i].r && dist <= bracketMarks[i+1].r) {
+        const t = (dist - bracketMarks[i].r) / (bracketMarks[i+1].r - bracketMarks[i].r);
+        topPct = bracketMarks[i].pct + t * (bracketMarks[i+1].pct - bracketMarks[i].pct);
         break;
       }
     }
   }
 
-  if (ladderIndLeft) ladderIndLeft.style.top = `${topPct}%`;
-  if (ladderIndRight) ladderIndRight.style.top = `${topPct}%`;
+  const indLeft = document.getElementById('ladderIndLeft');
+  const indRight = document.getElementById('ladderIndRight');
+  if (indLeft) indLeft.style.top = `${topPct}%`;
+  if (indRight) indRight.style.top = `${topPct}%`;
 
-  if (gunnerMainDist) gunnerMainDist.textContent = `${Math.round(sol.adjustedDistance)} M`;
-  if (gunnerSubStats) gunnerSubStats.textContent = `${sol.mils} MIL · ${sol.bearing.toFixed(1)}° · ${sol.tof} S`;
+  // Range validity formatting
+  if (!sol.inRange) {
+    if (gunnerMainDist) {
+      gunnerMainDist.textContent = `${Math.round(sol.adjustedDistance)} M`;
+      gunnerMainDist.classList.add('out-of-range');
+    }
+    if (gunnerSubStats) {
+      gunnerSubStats.textContent = sol.warning ? `⚠️ ${sol.warning}` : `⚠️ NGOÀI TẦM BẮN (80M-684M)`;
+      gunnerSubStats.classList.add('out-of-range');
+    }
+    if (indLeft) indLeft.classList.add('out-of-range');
+    if (indRight) indRight.classList.add('out-of-range');
+  } else {
+    if (gunnerMainDist) {
+      gunnerMainDist.textContent = `${Math.round(sol.adjustedDistance)} M`;
+      gunnerMainDist.classList.remove('out-of-range');
+    }
+    if (gunnerSubStats) {
+      gunnerSubStats.textContent = `${sol.mils} MIL · ${sol.bearing.toFixed(1)}° · ${sol.tof} S`;
+      gunnerSubStats.classList.remove('out-of-range');
+    }
+    if (indLeft) indLeft.classList.remove('out-of-range');
+    if (indRight) indRight.classList.remove('out-of-range');
+  }
 
   if (targetCoordBadge) {
     targetCoordBadge.textContent = `x${(sol.target.x / 100).toFixed(2)} y${(sol.target.y / 100).toFixed(2)}`;
@@ -590,15 +740,44 @@ async function loadMap(mapKey) {
     }).openTooltip();
   }
 
-  // Amber Range Circle around G touching T
+  // 1. Min Range Circle around G (80m dashed red/amber)
+  if (!gunMinRangeCircle) {
+    gunMinRangeCircle = L.circle(gunLatLng, {
+      radius: 80,
+      color: '#ef4444',
+      weight: 1.5,
+      dashArray: '4, 4',
+      fillColor: '#ef4444',
+      fillOpacity: 0.05
+    }).addTo(map);
+  } else {
+    gunMinRangeCircle.setLatLng(gunLatLng);
+  }
+
+  // 2. Max Range Circle around G (684m solid amber)
+  if (!gunMaxRangeCircle) {
+    gunMaxRangeCircle = L.circle(gunLatLng, {
+      radius: 684,
+      color: '#f59e0b',
+      weight: 1.6,
+      fillColor: '#f59e0b',
+      fillOpacity: 0.03
+    }).addTo(map);
+  } else {
+    gunMaxRangeCircle.setLatLng(gunLatLng);
+  }
+
+  // 3. Current Target Distance Ring
   if (!gunRangeCircle) {
     gunRangeCircle = L.circle(gunLatLng, {
-      radius: 400,
+      radius: 176,
       color: '#f59e0b',
-      fillColor: '#f59e0b',
-      fillOpacity: 0.08,
-      weight: 1.5
+      weight: 1,
+      dashArray: '3, 4',
+      fillOpacity: 0
     }).addTo(map);
+  } else {
+    gunRangeCircle.setLatLng(gunLatLng);
   }
 
   // Load Objectives / Control Zones & Towers
@@ -723,7 +902,9 @@ moveToTargetBtn.addEventListener('click', () => {
 copySolutionBtn.addEventListener('click', () => {
   if (!currentSolution) return;
   const s = currentSolution;
-  const text = `[L81 MORTAR - ${MAP_CONFIGS[currentMapKey].name}] Cự ly cần bắn: ${s.adjustedDistance.toFixed(1)}m (Thực: ${s.dist2D.toFixed(0)}m, Bù cao: ${s.rangeCompensation >= 0 ? '+' : ''}${s.rangeCompensation.toFixed(1)}m) | Góc: ${Math.round(s.bearing)}° (${s.cardinal}) | Thước ngắm: ${s.mils} mils (${s.elevDegrees}°) | Đạn bay: ~${s.tof}s`;
+  const text = s.inRange
+    ? `[L81 MORTAR - ${MAP_CONFIGS[currentMapKey].name}] Cự ly cần bắn: ${s.adjustedDistance.toFixed(1)}m (Thực: ${s.dist2D.toFixed(0)}m, Bù cao: ${s.rangeCompensation >= 0 ? '+' : ''}${s.rangeCompensation.toFixed(1)}m) | Hướng: ${Math.round(s.bearing)}° (${s.cardinal}) | Thước ngắm: ${s.mils} MIL (${s.elevDegrees}°) | Đạn bay: ~${s.tof}s`
+    : `[L81 MORTAR - ${MAP_CONFIGS[currentMapKey].name}] ⚠️ ${s.warning} (Cự ly: ${s.adjustedDistance.toFixed(0)}m ngoài khoảng 80m - 684m) | Hướng: ${Math.round(s.bearing)}° (${s.cardinal})`;
   navigator.clipboard.writeText(text).then(() => {
     showToast("Đã sao chép giải pháp bắn vào bộ nhớ tạm!");
   });
@@ -814,8 +995,80 @@ if (gunnerMinBtn && gunnerSightBox) {
   });
 }
 
-// Keyboard shortcuts (1: Gun, 2: Target, Space: Center, Esc: Cancel)
+// RANGE LADDER MODAL CONTROLS & TABLE RENDERING
+const rangeLadderBtn = document.getElementById('rangeLadderBtn');
+const rangeLadderModal = document.getElementById('range-ladder-modal');
+const closeLadderModalBtn = document.getElementById('closeLadderModalBtn');
+const ladderSearchInput = document.getElementById('ladderSearchInput');
+const ladderTableBody = document.getElementById('ladderTableBody');
+
+function renderLadderTable(filterText = '') {
+  if (!ladderTableBody) return;
+  const term = filterText.toLowerCase().trim();
+
+  const rowsHtml = L81_FIRING_TABLE.map(([r, mil]) => {
+    const tof = (10.0 + mil * 0.01494).toFixed(1);
+    const elevDeg = (mil * 0.05625).toFixed(1);
+    let trait = 'Tầm trung chuẩn';
+    if (r <= 110) trait = 'Góc siêu cao (Lob cự ly gần)';
+    else if (r <= 187) trait = 'Tầm gần - dốc cao';
+    else if (r >= 600) trait = 'Tầm xa tối đa (Hạ nòng)';
+    else if (r >= 450) trait = 'Tầm xa';
+
+    if (term) {
+      const match = `${r}`.includes(term) || `${mil}`.includes(term) || trait.toLowerCase().includes(term);
+      if (!match) return '';
+    }
+
+    const isActive = currentSolution && currentSolution.inRange && Math.abs(currentSolution.adjustedDistance - r) < 6;
+
+    return `
+      <tr class="${isActive ? 'active-bracket' : ''}">
+        <td class="col-range">${r} m</td>
+        <td class="col-mil">${mil} MIL</td>
+        <td class="col-tof">${tof} s</td>
+        <td>${elevDeg}°</td>
+        <td><span class="badge-tag-bracket">${trait}</span></td>
+      </tr>
+    `;
+  }).filter(Boolean).join('');
+
+  ladderTableBody.innerHTML = rowsHtml || `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Không tìm thấy cự ly phù hợp</td></tr>`;
+}
+
+if (rangeLadderBtn && rangeLadderModal) {
+  rangeLadderBtn.addEventListener('click', () => {
+    renderLadderTable(ladderSearchInput ? ladderSearchInput.value : '');
+    rangeLadderModal.classList.remove('hidden');
+  });
+}
+
+if (closeLadderModalBtn && rangeLadderModal) {
+  closeLadderModalBtn.addEventListener('click', () => {
+    rangeLadderModal.classList.add('hidden');
+  });
+}
+
+if (rangeLadderModal) {
+  rangeLadderModal.addEventListener('click', (e) => {
+    if (e.target === rangeLadderModal) {
+      rangeLadderModal.classList.add('hidden');
+    }
+  });
+}
+
+if (ladderSearchInput) {
+  ladderSearchInput.addEventListener('input', (e) => {
+    renderLadderTable(e.target.value);
+  });
+}
+
+// Keyboard shortcuts (1: Gun, 2: Target, Space: Center, Esc: Cancel/Close Modal)
 window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && rangeLadderModal && !rangeLadderModal.classList.contains('hidden')) {
+    rangeLadderModal.classList.add('hidden');
+    return;
+  }
   if (e.target.tagName === 'INPUT') return;
   if (e.key === '1') setGunModeBtn.click();
   else if (e.key === '2') setTargetModeBtn.click();
