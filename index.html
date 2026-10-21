@@ -214,6 +214,74 @@
     <button id="hud-toggle-btn" style="display: none;">
       🎯 Hiện Bảng Tính Bắn
     </button>
+
+    <!-- GUNNER SIGHT IN-GAME SIMULATION (BOTTOM RIGHT HUD) -->
+    <div id="gunner-sight-box">
+      <div class="gunner-header">
+        <span class="gunner-title">GUNNER SIGHT</span>
+        <div class="gunner-controls">
+          <button class="gunner-icon-btn" id="gunnerMinBtn" title="Thu gọn / Mở rộng">⤢</button>
+        </div>
+      </div>
+
+      <div class="gunner-body" id="gunnerBody">
+        <!-- TOP AZIMUTH / BEARING TAPE -->
+        <div class="gunner-tape-container">
+          <span class="tape-label tape-left">RNG</span>
+          <div class="tape-canvas-wrapper">
+            <canvas id="headingTapeCanvas" width="220" height="28"></canvas>
+            <div class="tape-pointer">▲</div>
+          </div>
+          <span class="tape-label tape-right">MIL</span>
+        </div>
+
+        <!-- CENTER SIGHT & LADDERS -->
+        <div class="gunner-center-stage">
+          <!-- LEFT: RANGE LADDER -->
+          <div class="gunner-ladder ladder-left">
+            <div class="ladder-mark" style="top: 12%"><span class="ladder-num">80</span><span class="ladder-dash"></span></div>
+            <div class="ladder-mark" style="top: 32%"><span class="ladder-num">132</span><span class="ladder-dash"></span></div>
+            <div class="ladder-mark" style="top: 52%"><span class="ladder-num">187</span><span class="ladder-dash"></span></div>
+            <div class="ladder-mark" style="top: 72%"><span class="ladder-num">240</span><span class="ladder-dash"></span></div>
+            <div class="ladder-mark" style="top: 90%"><span class="ladder-num">340</span><span class="ladder-dash"></span></div>
+            <div class="ladder-indicator indicator-left" id="ladderIndLeft" style="top: 52%;"></div>
+          </div>
+
+          <!-- CENTER RETICLE -->
+          <div class="gunner-reticle-wrapper">
+            <svg class="gunner-reticle-svg" viewBox="0 0 160 160">
+              <line x1="80" y1="20" x2="80" y2="48" stroke="#4ade80" stroke-width="1.5" />
+              <line x1="80" y1="112" x2="80" y2="140" stroke="#4ade80" stroke-width="1.5" />
+              <line x1="20" y1="80" x2="48" y2="80" stroke="#4ade80" stroke-width="1.5" />
+              <line x1="112" y1="80" x2="140" y2="80" stroke="#4ade80" stroke-width="1.5" />
+              <circle cx="80" cy="80" r="32" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="45 10 45 10"/>
+              <circle cx="80" cy="80" r="4.5" fill="none" stroke="#4ade80" stroke-width="1.5" />
+              <line x1="72" y1="68" x2="88" y2="68" stroke="#4ade80" stroke-width="1" />
+              <line x1="72" y1="92" x2="88" y2="92" stroke="#4ade80" stroke-width="1" />
+            </svg>
+          </div>
+
+          <!-- RIGHT: MIL LADDER -->
+          <div class="gunner-ladder ladder-right">
+            <div class="ladder-mark" style="top: 12%"><span class="ladder-dash"></span><span class="ladder-num">950</span></div>
+            <div class="ladder-mark" style="top: 32%"><span class="ladder-dash"></span><span class="ladder-num">850</span></div>
+            <div class="ladder-mark" style="top: 52%"><span class="ladder-dash"></span><span class="ladder-num">800</span></div>
+            <div class="ladder-mark" style="top: 72%"><span class="ladder-dash"></span><span class="ladder-num">750</span></div>
+            <div class="ladder-mark" style="top: 90%"><span class="ladder-dash"></span><span class="ladder-num">650</span></div>
+            <div class="ladder-indicator indicator-right" id="ladderIndRight" style="top: 52%;"></div>
+          </div>
+        </div>
+
+        <!-- DIGITAL READOUT (LARGE GREEN) -->
+        <div class="gunner-readout">
+          <div class="gunner-readout-main" id="gunnerMainDist">--- M</div>
+          <div class="gunner-readout-sub" id="gunnerSubStats">--- MIL · ---° · --.- S</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARGET COORDINATES BADGE (BOTTOM CENTER) -->
+    <div id="target-coord-badge">x0.00 y0.00</div>
   </main>
 
   <!-- FOOTER COORDINATE TRACKER -->

@@ -300,6 +300,9 @@ function updateUI() {
 
   // Redraw Terrain Cross-Section Canvas
   drawCrossSection();
+
+  // Update In-Game Gunner Sight Simulation
+  updateGunnerSight(currentSolution);
 }
 
 // 4. DRAW TERRAIN CROSS-SECTION CANVAS
@@ -381,6 +384,102 @@ function drawCrossSection() {
   ctx.beginPath();
   ctx.arc(mapX(1), mapY(currentSolution.target.z), 5 * window.devicePixelRatio, 0, Math.PI * 2);
   ctx.fill();
+}
+
+// 4b. DRAW HEADING TAPE (GUNNER SIGHT)
+function drawHeadingTape(bearing) {
+  const canvas = document.getElementById('headingTapeCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const centerX = w / 2;
+  const pixelsPerDeg = 2.4;
+
+  const cardinalsMap = {
+    0: 'N', 45: 'NE', 90: 'E', 135: 'SE',
+    180: 'S', 225: 'SW', 270: 'W', 315: 'NW'
+  };
+
+  ctx.fillStyle = '#4ade80';
+  ctx.font = 'bold 9px monospace';
+  ctx.textAlign = 'center';
+
+  const minDeg = Math.floor(bearing - 45);
+  const maxDeg = Math.ceil(bearing + 45);
+
+  for (let deg = minDeg; deg <= maxDeg; deg++) {
+    const normDeg = ((deg % 360) + 360) % 360;
+    const x = centerX + (deg - bearing) * pixelsPerDeg;
+
+    if (x < -15 || x > w + 15) continue;
+
+    if (normDeg % 15 === 0) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 7);
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      const label = cardinalsMap[normDeg] || `${normDeg}`;
+      ctx.fillText(label, x, 18);
+    } else if (normDeg % 5 === 0) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 4);
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+}
+
+// 4c. UPDATE GUNNER SIGHT HUD
+function updateGunnerSight(sol) {
+  if (!sol) return;
+
+  drawHeadingTape(sol.bearing);
+
+  const ladderIndLeft = document.getElementById('ladderIndLeft');
+  const ladderIndRight = document.getElementById('ladderIndRight');
+  const gunnerMainDist = document.getElementById('gunnerMainDist');
+  const gunnerSubStats = document.getElementById('gunnerSubStats');
+  const targetCoordBadge = document.getElementById('target-coord-badge');
+
+  // Stops: 80m -> 12%, 132m -> 32%, 187m -> 52%, 240m -> 72%, 340m -> 90%
+  const stops = [
+    { r: 80, pct: 12 },
+    { r: 132, pct: 32 },
+    { r: 187, pct: 52 },
+    { r: 240, pct: 72 },
+    { r: 340, pct: 90 }
+  ];
+  let topPct = 52;
+  const r = sol.adjustedDistance;
+  if (r <= stops[0].r) topPct = stops[0].pct;
+  else if (r >= stops[stops.length - 1].r) topPct = stops[stops.length - 1].pct;
+  else {
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (r >= stops[i].r && r <= stops[i+1].r) {
+        const t = (r - stops[i].r) / (stops[i+1].r - stops[i].r);
+        topPct = stops[i].pct + t * (stops[i+1].pct - stops[i].pct);
+        break;
+      }
+    }
+  }
+
+  if (ladderIndLeft) ladderIndLeft.style.top = `${topPct}%`;
+  if (ladderIndRight) ladderIndRight.style.top = `${topPct}%`;
+
+  if (gunnerMainDist) gunnerMainDist.textContent = `${Math.round(sol.adjustedDistance)} M`;
+  if (gunnerSubStats) gunnerSubStats.textContent = `${sol.mils} MIL · ${sol.bearing.toFixed(1)}° · ${sol.tof} S`;
+
+  if (targetCoordBadge) {
+    targetCoordBadge.textContent = `x${(sol.target.x / 100).toFixed(2)} y${(sol.target.y / 100).toFixed(2)}`;
+  }
 }
 
 // 5. MAP INITIALIZATION & SWITCHING
@@ -714,6 +813,16 @@ document.getElementById('hudCollapseBtn').addEventListener('click', () => {
   hudPanel.classList.add('collapsed');
   hudToggleBtn.style.display = 'flex';
 });
+
+// Gunner Sight Minimize Toggle
+const gunnerMinBtn = document.getElementById('gunnerMinBtn');
+const gunnerSightBox = document.getElementById('gunner-sight-box');
+if (gunnerMinBtn && gunnerSightBox) {
+  gunnerMinBtn.addEventListener('click', () => {
+    gunnerSightBox.classList.toggle('minimized');
+    gunnerMinBtn.textContent = gunnerSightBox.classList.contains('minimized') ? '⤢' : '—';
+  });
+}
 
 // Keyboard shortcuts (1: Gun, 2: Target, Space: Center, Esc: Cancel)
 window.addEventListener('keydown', (e) => {

@@ -736,12 +736,245 @@ body.color-map-mode .leaflet-image-layer {
   to { transform: rotate(360deg); }
 }
 
+/* ============================================================
+   GUNNER SIGHT IN-GAME SIMULATION HUD (BOTTOM RIGHT)
+   ============================================================ */
+#gunner-sight-box {
+  position: absolute;
+  bottom: 40px;
+  right: 14px;
+  width: 310px;
+  background: rgba(10, 14, 20, 0.95);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(8px);
+  user-select: none;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  transition: transform 0.25s ease;
+}
+
+#gunner-sight-box.minimized .gunner-body {
+  display: none;
+}
+
+.gunner-header {
+  padding: 8px 12px;
+  background: rgba(15, 22, 32, 0.95);
+  border-bottom: 1px solid #1a2738;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gunner-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.gunner-icon-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.gunner-icon-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gunner-body {
+  padding: 10px 12px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* TOP HEADING TAPE */
+.gunner-tape-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border-bottom: 1px solid rgba(74, 222, 128, 0.15);
+  padding-bottom: 6px;
+}
+
+.tape-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #4ade80;
+  letter-spacing: 0.5px;
+}
+
+.tape-canvas-wrapper {
+  position: relative;
+  width: 210px;
+  height: 28px;
+  overflow: hidden;
+}
+
+#headingTapeCanvas {
+  width: 100%;
+  height: 100%;
+}
+
+.tape-pointer {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: #4ade80;
+  line-height: 1;
+}
+
+/* CENTER SIGHT STAGE */
+.gunner-center-stage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 150px;
+  position: relative;
+}
+
+/* ELEVATION LADDERS (LEFT & RIGHT) */
+.gunner-ladder {
+  width: 45px;
+  height: 100%;
+  position: relative;
+  font-size: 0.65rem;
+  color: #3b506b;
+}
+
+.ladder-mark {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  transform: translateY(-50%);
+}
+
+.ladder-left .ladder-mark {
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.ladder-right .ladder-mark {
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.ladder-dash {
+  width: 8px;
+  height: 1px;
+  background: #334155;
+}
+
+.ladder-num {
+  font-weight: 600;
+  color: #475569;
+}
+
+/* ORANGE INDICATOR NEEDLES */
+.ladder-indicator {
+  position: absolute;
+  width: 12px;
+  height: 2.5px;
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+  transition: top 0.15s ease-out;
+  border-radius: 1px;
+}
+
+.indicator-left {
+  right: 0;
+}
+
+.indicator-right {
+  left: 0;
+}
+
+/* CENTER RETICLE */
+.gunner-reticle-wrapper {
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gunner-reticle-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.4));
+}
+
+/* BOTTOM DIGITAL READOUT */
+.gunner-readout {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gunner-readout-main {
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: #4ade80;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+  line-height: 1.1;
+}
+
+.gunner-readout-sub {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4ade80;
+  opacity: 0.85;
+  letter-spacing: 0.8px;
+}
+
+/* COORDINATE BADGE */
+#target-coord-badge {
+  position: absolute;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 1000;
+}
+
 @media (max-width: 768px) {
   #hud-panel {
     width: calc(100vw - 20px);
     right: 10px;
     top: 10px;
     max-height: calc(100vh - 120px);
+  }
+  #gunner-sight-box {
+    width: 250px;
+    bottom: 35px;
+    right: 8px;
   }
   .brand-title span {
     display: none;
