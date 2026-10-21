@@ -7,8 +7,8 @@
   --border-focus: #00e5ff;
   --accent-cyan: #00e5ff;
   --accent-green: #00ff88;
-  --accent-amber: #ffb703;
-  --accent-red: #ff3366;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
   --text-main: #f1f5f9;
   --text-muted: #889bb3;
   --font-mono: 'Consolas', 'Courier New', monospace;
@@ -60,8 +60,8 @@ html, body {
 .brand-logo {
   width: 30px;
   height: 30px;
-  fill: var(--accent-cyan);
-  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.5));
+  fill: var(--accent-amber);
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));
 }
 
 .brand-title {
@@ -76,9 +76,9 @@ html, body {
 }
 
 .brand-tag {
-  background: rgba(0, 229, 255, 0.15);
-  color: var(--accent-cyan);
-  border: 1px solid var(--accent-cyan);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber);
+  border: 1px solid var(--accent-amber);
   font-size: 0.65rem;
   padding: 2px 6px;
   border-radius: 4px;
@@ -117,7 +117,7 @@ html, body {
 
 .map-btn.active {
   background: #1e2c3f;
-  color: var(--accent-cyan);
+  color: var(--accent-amber);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -149,32 +149,139 @@ html, body {
 }
 
 .action-btn.active-gun {
-  background: rgba(0, 255, 136, 0.2);
-  border-color: var(--accent-green);
-  color: var(--accent-green);
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
 }
 
 .action-btn.active-target {
-  background: rgba(255, 51, 102, 0.2);
+  background: rgba(239, 68, 68, 0.2);
   border-color: var(--accent-red);
   color: var(--accent-red);
-  box-shadow: 0 0 10px rgba(255, 51, 102, 0.3);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
 
-/* MAP CONTAINER */
+/* MAP VIEWPORT */
 #map-viewport {
   flex: 1;
   width: 100%;
   height: calc(100vh - 54px);
   position: relative;
-  background: #06090e;
+  background: #080a0f;
 }
 
 #map {
   width: 100%;
   height: 100%;
-  background: #06090e;
+  background: #080a0f;
+}
+
+/* ============================================================
+   MONOCHROME / BLACK & WHITE MAP FILTER (METAFORGE STYLE)
+   ============================================================ */
+.leaflet-image-layer {
+  filter: grayscale(100%) contrast(145%) brightness(82%);
+  transition: filter 0.3s ease;
+}
+
+body.color-map-mode .leaflet-image-layer {
+  filter: none;
+}
+
+/* ============================================================
+   METAFORGE STYLE MARKERS (G & T)
+   ============================================================ */
+.custom-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.metaforge-marker {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 6px rgba(0, 0, 0, 0.9);
+  cursor: grab;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.metaforge-marker:hover {
+  transform: scale(1.2);
+}
+
+.metaforge-marker:active {
+  cursor: grabbing;
+  transform: scale(1.3);
+}
+
+.marker-gun {
+  background: #f59e0b; /* Amber Gold */
+  color: #000;
+  border: 2px solid #000;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.7);
+}
+
+.marker-target {
+  background: #ef4444; /* Signal Red */
+  color: #fff;
+  border: 2px solid #000;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
+}
+
+/* TOWER & OBJECTIVE DIAMOND MARKERS */
+.tower-marker-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.tower-diamond {
+  width: 18px;
+  height: 18px;
+  background: #0f141c;
+  border: 1.5px solid #fff;
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.tower-diamond svg {
+  transform: rotate(-45deg);
+  width: 10px;
+  height: 10px;
+  fill: #fff;
+}
+
+.tower-marker-container:hover .tower-diamond {
+  transform: rotate(45deg) scale(1.2);
+  border-color: #00e5ff;
+}
+
+.tower-label {
+  margin-top: 5px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
 /* FLOATING TACTICAL PANEL (HUD) */
@@ -215,7 +322,7 @@ html, body {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: var(--accent-cyan);
+  color: var(--accent-amber);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -270,9 +377,9 @@ html, body {
 }
 
 .tab-btn.active {
-  color: var(--accent-cyan);
-  border-bottom-color: var(--accent-cyan);
-  background: rgba(0, 229, 255, 0.04);
+  color: var(--accent-amber);
+  border-bottom-color: var(--accent-amber);
+  background: rgba(245, 158, 11, 0.04);
 }
 
 .panel-content {
@@ -286,8 +393,8 @@ html, body {
 
 /* BIG RESULT CARDS */
 .firing-solution-hero {
-  background: linear-gradient(180deg, rgba(0, 255, 136, 0.08) 0%, rgba(18, 26, 38, 0.9) 100%);
-  border: 1px solid rgba(0, 255, 136, 0.4);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.1) 0%, rgba(18, 26, 38, 0.9) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
   border-radius: 10px;
   padding: 14px;
   text-align: center;
@@ -298,7 +405,7 @@ html, body {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--accent-green);
+  color: var(--accent-amber);
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -310,13 +417,13 @@ html, body {
   color: #fff;
   line-height: 1;
   margin-bottom: 6px;
-  text-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+  text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
 }
 
 .hero-unit {
   font-size: 1.1rem;
   font-weight: normal;
-  color: var(--accent-green);
+  color: var(--accent-amber);
 }
 
 .hero-sub {
@@ -349,12 +456,12 @@ html, body {
   text-align: center;
 }
 
-.sol-card.highlight-cyan {
-  border-color: rgba(0, 229, 255, 0.35);
+.sol-card.highlight-amber {
+  border-color: rgba(245, 158, 11, 0.35);
 }
 
-.sol-card.highlight-amber {
-  border-color: rgba(255, 183, 3, 0.35);
+.sol-card.highlight-red {
+  border-color: rgba(239, 68, 68, 0.35);
 }
 
 .sol-label {
@@ -497,8 +604,8 @@ html, body {
 
 /* BUTTONS */
 .btn-primary {
-  background: #007799;
-  border: 1px solid var(--accent-cyan);
+  background: #b45309;
+  border: 1px solid var(--accent-amber);
   color: #fff;
   padding: 10px;
   border-radius: 6px;
@@ -513,8 +620,8 @@ html, body {
 }
 
 .btn-primary:hover {
-  background: #0099c2;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+  background: #d97706;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
 }
 
 /* HUD TOGGLE FLOATING BUTTON */
@@ -524,7 +631,7 @@ html, body {
   right: 14px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  color: var(--accent-cyan);
+  color: var(--accent-amber);
   padding: 8px 14px;
   border-radius: 8px;
   font-size: 0.8rem;
@@ -561,33 +668,10 @@ html, body {
   color: #fff;
 }
 
-/* LEAFLET CUSTOM MARKER STYLES */
-.mortar-marker-icon {
-  filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.8));
-  cursor: grab;
-  transition: transform 0.1s ease;
-}
-
-.mortar-marker-icon:active {
-  cursor: grabbing;
-  transform: scale(1.15);
-}
-
-.target-marker-icon {
-  filter: drop-shadow(0 0 8px rgba(255, 51, 102, 0.8));
-  cursor: grab;
-  transition: transform 0.1s ease;
-}
-
-.target-marker-icon:active {
-  cursor: grabbing;
-  transform: scale(1.15);
-}
-
 /* LEAFLET TRAJECTORY MIDPOINT LABEL */
 .trajectory-tooltip {
   background: rgba(11, 17, 26, 0.95) !important;
-  border: 1px solid var(--accent-cyan) !important;
+  border: 1px solid var(--accent-amber) !important;
   color: #fff !important;
   font-family: var(--font-mono) !important;
   font-size: 0.75rem !important;
@@ -598,7 +682,7 @@ html, body {
 }
 
 .trajectory-tooltip::before {
-  border-top-color: var(--accent-cyan) !important;
+  border-top-color: var(--accent-amber) !important;
 }
 
 /* TOAST */
@@ -607,13 +691,13 @@ html, body {
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  background: #00ff88;
+  background: #f59e0b;
   color: #000;
   font-weight: 800;
   padding: 8px 20px;
   border-radius: 20px;
   font-size: 0.85rem;
-  box-shadow: 0 4px 20px rgba(0, 255, 136, 0.5);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.5);
   opacity: 0;
   transition: opacity 0.25s ease;
   pointer-events: none;
@@ -642,8 +726,8 @@ html, body {
 .spinner {
   width: 44px;
   height: 44px;
-  border: 3px solid rgba(0, 229, 255, 0.15);
-  border-top-color: var(--accent-cyan);
+  border: 3px solid rgba(245, 158, 11, 0.2);
+  border-top-color: var(--accent-amber);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

@@ -80,7 +80,7 @@ let imageOverlay = null;
 let gunMarker = null;
 let targetMarker = null;
 let trajectoryLine = null;
-let rangeCircles = [];
+let gunRangeCircle = null;
 let objectivesLayer = null;
 
 let clickMode = null; // 'gun', 'target', or null
@@ -94,6 +94,7 @@ const footerPos = document.getElementById('footer-pos');
 const footerElev = document.getElementById('footer-elev');
 const hudPanel = document.getElementById('hud-panel');
 const hudToggleBtn = document.getElementById('hud-toggle-btn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 
 // Solution displays
 const heroFiringRange = document.getElementById('heroFiringRange');
@@ -125,44 +126,32 @@ const setGunModeBtn = document.getElementById('setGunModeBtn');
 const setTargetModeBtn = document.getElementById('setTargetModeBtn');
 const centerViewBtn = document.getElementById('centerViewBtn');
 
-// SVG Custom Marker Icons
+// METAFORGE STYLE G & T CIRCLE BADGES
 function createMortarIcon() {
-  const svg = `
-    <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="21" cy="21" r="18" fill="rgba(0, 255, 136, 0.2)" stroke="#00ff88" stroke-width="2"/>
-      <circle cx="21" cy="21" r="5" fill="#00ff88"/>
-      <line x1="21" y1="3" x2="21" y2="10" stroke="#00ff88" stroke-width="2"/>
-      <line x1="21" y1="32" x2="21" y2="39" stroke="#00ff88" stroke-width="2"/>
-      <line x1="3" y1="21" x2="10" y2="21" stroke="#00ff88" stroke-width="2"/>
-      <line x1="32" y1="21" x2="39" y2="21" stroke="#00ff88" stroke-width="2"/>
-      <path d="M14 27 L21 15 L28 27 Z" fill="none" stroke="#00ff88" stroke-width="2"/>
-    </svg>
+  const html = `
+    <div class="metaforge-marker marker-gun" title="Vị trí Súng cối [G] (Kéo thả để đổi vị trí)">
+      <span>G</span>
+    </div>
   `;
   return L.divIcon({
-    html: svg,
-    className: 'mortar-marker-icon',
-    iconSize: [42, 42],
-    iconAnchor: [21, 21]
+    html: html,
+    className: 'custom-div-icon',
+    iconSize: [26, 26],
+    iconAnchor: [13, 13]
   });
 }
 
 function createTargetIcon() {
-  const svg = `
-    <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="21" cy="21" r="16" fill="rgba(255, 51, 102, 0.2)" stroke="#ff3366" stroke-width="2"/>
-      <circle cx="21" cy="21" r="2" fill="#ff3366"/>
-      <line x1="21" y1="2" x2="21" y2="13" stroke="#ff3366" stroke-width="2.5"/>
-      <line x1="21" y1="29" x2="21" y2="40" stroke="#ff3366" stroke-width="2.5"/>
-      <line x1="2" y1="21" x2="13" y2="21" stroke="#ff3366" stroke-width="2.5"/>
-      <line x1="29" y1="21" x2="40" y2="21" stroke="#ff3366" stroke-width="2.5"/>
-      <circle cx="21" cy="21" r="8" fill="none" stroke="#ff3366" stroke-width="1.5" stroke-dasharray="2 2"/>
-    </svg>
+  const html = `
+    <div class="metaforge-marker marker-target" title="Mục tiêu [T] (Kéo thả để đổi vị trí)">
+      <span>T</span>
+    </div>
   `;
   return L.divIcon({
-    html: svg,
-    className: 'target-marker-icon',
-    iconSize: [42, 42],
-    iconAnchor: [21, 21]
+    html: html,
+    className: 'custom-div-icon',
+    iconSize: [26, 26],
+    iconAnchor: [13, 13]
   });
 }
 
@@ -220,15 +209,13 @@ function calculateBallistics(gunPos, targetPos) {
   let mathDeg = (Math.atan2(dy, dx) * (180 / Math.PI) + 360) % 360;
 
   // L81 Mortar Range & Height Compensation:
-  // In high-angle mortar trajectories, the shell impacts at a steep angle (beta ≈ 62°).
-  // When target is deltaZ higher, shell hits the mountain early.
+  // Impact angle beta ≈ 62°, tan(62°) ≈ 1.88
   // Delta distance compensation: ΔD = ΔZ / tan(62°) ≈ 0.532 * ΔZ
-  const tanImpactAngle = 1.88; // tan(62°)
+  const tanImpactAngle = 1.88;
   const rangeCompensation = deltaZ / tanImpactAngle;
   const adjustedDistance = Math.max(50, dist2D + rangeCompensation);
 
   // Mil Calculation for standard 81mm mortar (approx 800 - 1550 mils):
-  // 100m ≈ 1520 mils, 500m ≈ 1340 mils, 1000m ≈ 1080 mils, 1250m ≈ 800 mils
   const clampedRange = Math.min(1250, Math.max(50, adjustedDistance));
   const tNorm = (clampedRange - 50) / 1200; // 0 to 1
   const mils = Math.round(1550 - tNorm * 750);
@@ -297,22 +284,18 @@ function updateUI() {
   inputTargetX.value = currentSolution.target.x.toFixed(1);
   inputTargetY.value = currentSolution.target.y.toFixed(1);
 
-  // Update Trajectory Polyline
+  // Update Trajectory Polyline (Clean dashed line matching Metaforge)
   if (trajectoryLine) {
     trajectoryLine.setLatLngs([gunLatLng, targetLatLng]);
-    const midLatLng = L.latLng(
-      (gunLatLng.lat + targetLatLng.lat) / 2,
-      (gunLatLng.lng + targetLatLng.lng) / 2
-    );
     trajectoryLine.setTooltipContent(
       `Cự ly: ${currentSolution.dist2D.toFixed(0)}m (Bù: ${currentSolution.adjustedDistance.toFixed(0)}m) | ${Math.round(currentSolution.bearing)}°`
     );
   }
 
-  // Update Range Circles around Gun
-  if (rangeCircles.length === 2) {
-    rangeCircles[0].setLatLng(gunLatLng);
-    rangeCircles[1].setLatLng(gunLatLng);
+  // Update Amber Target Range Circle centered at G touching T
+  if (gunRangeCircle) {
+    gunRangeCircle.setLatLng(gunLatLng);
+    gunRangeCircle.setRadius(currentSolution.dist2D);
   }
 
   // Redraw Terrain Cross-Section Canvas
@@ -362,41 +345,39 @@ function drawCrossSection() {
   ctx.closePath();
 
   const terrainGrad = ctx.createLinearGradient(0, mapY(maxZ), 0, h);
-  terrainGrad.addColorStop(0, 'rgba(0, 229, 255, 0.25)');
+  terrainGrad.addColorStop(0, 'rgba(245, 158, 11, 0.25)');
   terrainGrad.addColorStop(1, 'rgba(10, 16, 26, 0.9)');
   ctx.fillStyle = terrainGrad;
   ctx.fill();
 
   // Terrain line
-  ctx.strokeStyle = '#00e5ff';
+  ctx.strokeStyle = '#f59e0b';
   ctx.lineWidth = 2 * window.devicePixelRatio;
   ctx.stroke();
 
   // 2. Draw Parabolic Shell Trajectory
   ctx.beginPath();
-  const apexT = 0.5;
   for (let i = 0; i <= samples; i++) {
     const t = i / samples;
-    // Parabolic arc equation
     const arcZ = currentSolution.gun.z + (currentSolution.target.z - currentSolution.gun.z) * t + 4 * (currentSolution.apexZ - Math.max(currentSolution.gun.z, currentSolution.target.z)) * t * (1 - t);
     const px = mapX(t);
     const py = mapY(arcZ);
     if (i === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   }
-  ctx.strokeStyle = '#00ff88';
-  ctx.lineWidth = 2.5 * window.devicePixelRatio;
-  ctx.setLineDash([5 * window.devicePixelRatio, 4 * window.devicePixelRatio]);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2 * window.devicePixelRatio;
+  ctx.setLineDash([4 * window.devicePixelRatio, 4 * window.devicePixelRatio]);
   ctx.stroke();
   ctx.setLineDash([]);
 
   // Draw Gun & Target Dots
-  ctx.fillStyle = '#00ff88';
+  ctx.fillStyle = '#f59e0b';
   ctx.beginPath();
   ctx.arc(mapX(0), mapY(currentSolution.gun.z), 5 * window.devicePixelRatio, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#ff3366';
+  ctx.fillStyle = '#ef4444';
   ctx.beginPath();
   ctx.arc(mapX(1), mapY(currentSolution.target.z), 5 * window.devicePixelRatio, 0, Math.PI * 2);
   ctx.fill();
@@ -448,12 +429,12 @@ async function loadMap(mapKey) {
         gunMarker.setLatLng(e.latlng);
         setClickMode(null);
         updateUI();
-        showToast("Đã đặt vị trí Súng cối!");
+        showToast("Đã đặt vị trí Súng cối [G]!");
       } else if (clickMode === 'target') {
         targetMarker.setLatLng(e.latlng);
         setClickMode(null);
         updateUI();
-        showToast("Đã đặt vị trí Mục tiêu!");
+        showToast("Đã đặt vị trí Mục tiêu [T]!");
       }
     });
   }
@@ -467,7 +448,7 @@ async function loadMap(mapKey) {
   map.setMaxBounds(bounds);
   map.fitBounds(bounds);
 
-  // Initialize Markers
+  // Initialize Markers (MetaForge style G & T)
   const gunLatLng = L.latLng(cfg.defaultGun[1], cfg.defaultGun[0]);
   const targetLatLng = L.latLng(cfg.defaultTarget[1], cfg.defaultTarget[0]);
 
@@ -475,7 +456,7 @@ async function loadMap(mapKey) {
     gunMarker = L.marker(gunLatLng, {
       icon: createMortarIcon(),
       draggable: true,
-      title: 'Vị trí Súng cối (Kéo thả để di chuyển)'
+      title: 'Vị trí Súng cối [G] (Kéo thả để di chuyển)'
     }).addTo(map);
 
     gunMarker.on('drag', updateUI);
@@ -487,7 +468,7 @@ async function loadMap(mapKey) {
     targetMarker = L.marker(targetLatLng, {
       icon: createTargetIcon(),
       draggable: true,
-      title: 'Mục tiêu bắn (Kéo thả để di chuyển)'
+      title: 'Mục tiêu bắn [T] (Kéo thả để di chuyển)'
     }).addTo(map);
 
     targetMarker.on('drag', updateUI);
@@ -495,13 +476,13 @@ async function loadMap(mapKey) {
     targetMarker.setLatLng(targetLatLng);
   }
 
-  // Trajectory Line
+  // Trajectory Line (Dashed line matching screenshot)
   if (!trajectoryLine) {
     trajectoryLine = L.polyline([gunLatLng, targetLatLng], {
-      color: '#00e5ff',
-      weight: 3,
-      dashArray: '8, 6',
-      opacity: 0.9
+      color: '#ffffff',
+      weight: 2,
+      dashArray: '5, 5',
+      opacity: 0.95
     }).addTo(map);
 
     trajectoryLine.bindTooltip('', {
@@ -511,30 +492,18 @@ async function loadMap(mapKey) {
     }).openTooltip();
   }
 
-  // Range Circles (Min 50m, Max 1250m)
-  if (rangeCircles.length === 0) {
-    const minCircle = L.circle(gunLatLng, {
-      radius: 50,
-      color: '#ff3366',
-      fillColor: '#ff3366',
-      fillOpacity: 0.05,
-      weight: 1.5,
-      dashArray: '4, 4'
+  // Amber Range Circle around G touching T
+  if (!gunRangeCircle) {
+    gunRangeCircle = L.circle(gunLatLng, {
+      radius: 400,
+      color: '#f59e0b',
+      fillColor: '#f59e0b',
+      fillOpacity: 0.08,
+      weight: 1.5
     }).addTo(map);
-
-    const maxCircle = L.circle(gunLatLng, {
-      radius: 1250,
-      color: '#00ff88',
-      fillColor: '#00ff88',
-      fillOpacity: 0.03,
-      weight: 1.5,
-      dashArray: '6, 6'
-    }).addTo(map);
-
-    rangeCircles = [minCircle, maxCircle];
   }
 
-  // Load Objectives / Control Zones
+  // Load Objectives / Control Zones & Towers
   loadObjectives(cfg);
 
   // Update tabs
@@ -551,7 +520,7 @@ async function loadMap(mapKey) {
   }, 200);
 }
 
-// 6. OBJECTIVES (CONTROL ZONES) OVERLAY
+// 6. OBJECTIVES & TOWERS OVERLAY (DIAMOND BADGES)
 async function loadObjectives(cfg) {
   if (objectivesLayer) {
     map.removeLayer(objectivesLayer);
@@ -568,30 +537,35 @@ async function loadObjectives(cfg) {
       if (!zone || !zone.center) return;
       const x = zone.center[0];
       const y = zone.center[1];
-      const r = zone.extents ? zone.extents[0] : 300;
-      const name = (item.config || 'Objective').replace('DA_ControlZoneConfig_', '');
+      const name = (item.config || 'Objective')
+        .replace('DA_ControlZoneConfig_', '')
+        .replace('_', ' ');
 
-      const circle = L.circle([y, x], {
-        radius: r,
-        color: '#ffb703',
-        fillColor: '#ffb703',
-        fillOpacity: 0.08,
-        weight: 1
+      // Diamond Tower Badge Icon matching Metaforge
+      const towerHtml = `
+        <div class="tower-marker-container">
+          <div class="tower-diamond">
+            <svg viewBox="0 0 24 24"><path d="M12 2L4 22h16L12 2zm0 4.5l5.2 13H6.8L12 6.5z"/></svg>
+          </div>
+          <div class="tower-label">${name}</div>
+        </div>
+      `;
+
+      const diamondIcon = L.divIcon({
+        html: towerHtml,
+        className: 'custom-div-icon',
+        iconSize: [80, 42],
+        iconAnchor: [40, 9]
       });
 
-      circle.bindTooltip(`📍 ${name}`, {
-        permanent: false,
-        direction: 'top',
-        className: 'trajectory-tooltip'
-      });
-
-      circle.on('click', () => {
+      const marker = L.marker([y, x], { icon: diamondIcon });
+      marker.on('click', () => {
         targetMarker.setLatLng([y, x]);
         updateUI();
-        showToast(`Đã khóa mục tiêu vào cứ điểm: ${name}`);
+        showToast(`Đã khóa mục tiêu vào: ${name}`);
       });
 
-      objectivesLayer.addLayer(circle);
+      objectivesLayer.addLayer(marker);
     });
 
     objectivesLayer.addTo(map);
@@ -610,12 +584,12 @@ function setClickMode(mode) {
 
 setGunModeBtn.addEventListener('click', () => {
   setClickMode(clickMode === 'gun' ? null : 'gun');
-  if (clickMode === 'gun') showToast("Click vào bản đồ để đặt vị trí SÚNG CỐI");
+  if (clickMode === 'gun') showToast("Click vào bản đồ để đặt vị trí SÚNG CỐI [G]");
 });
 
 setTargetModeBtn.addEventListener('click', () => {
   setClickMode(clickMode === 'target' ? null : 'target');
-  if (clickMode === 'target') showToast("Click vào bản đồ để đặt MỤC TIÊU");
+  if (clickMode === 'target') showToast("Click vào bản đồ để đặt MỤC TIÊU [T]");
 });
 
 centerViewBtn.addEventListener('click', () => {
@@ -623,6 +597,15 @@ centerViewBtn.addEventListener('click', () => {
   const bounds = L.latLngBounds(gunMarker.getLatLng(), targetMarker.getLatLng());
   map.fitBounds(bounds, { padding: [80, 80] });
 });
+
+// Color / Monochrome Theme Toggle
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', () => {
+    const isColor = document.body.classList.toggle('color-map-mode');
+    themeToggleBtn.textContent = isColor ? '🎨 Màu Gốc' : '🌓 Trắng Đen';
+    showToast(isColor ? 'Đã bật bản đồ Màu Gốc' : 'Đã bật bản đồ Trắng Đen');
+  });
+}
 
 // 8. FORM CONTROLS & LISTENERS
 applyCoordsBtn.addEventListener('click', () => {
@@ -687,7 +670,7 @@ function renderHistory() {
     item.style.padding = '6px 0';
     item.innerHTML = `
       <div><strong>${t.name}</strong> (${t.x}, ${t.y})</div>
-      <div style="color:var(--accent-green)">${t.dist} | ${t.bearing}</div>
+      <div style="color:var(--accent-amber)">${t.dist} | ${t.bearing}</div>
     `;
     item.addEventListener('click', () => {
       targetMarker.setLatLng([parseFloat(t.y), parseFloat(t.x)]);
