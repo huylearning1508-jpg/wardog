@@ -831,8 +831,9 @@ function updateGunnerSight(sol) {
 
 // ============================================================
 // 4e. FULLSCREEN AIMING SIGHT OVERLAY (Z-INDEX 999999 OVER ALL LAYERS)
+// EXACT 1:1 SCALE FROM GAME: 102.55px per 50 MIL (2.051 px/mil)
 // ============================================================
-const SCOPE_LADDER_PX_PER_MIL = 0.9;
+const SCOPE_LADDER_PX_PER_MIL = 2.051;
 
 function checkCoordsFilled() {
   const gx = parseCoordInput(inputGunX.value);
@@ -1078,7 +1079,14 @@ function openScopeOverlay() {
   if (!isNaN(tx) && !isNaN(ty) && targetMarker) targetMarker.setLatLng([ty, tx]);
 
   updateUI();
-  if (currentSolution) updateScopeOverlay(currentSolution);
+  if (currentSolution) {
+    updateScopeOverlay(currentSolution);
+    // Auto-sync with Desktop Overlay via clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      const clipStr = `WARDOG: B${currentSolution.bearing.toFixed(1)} R${currentSolution.adjustedDistance.toFixed(0)} M${currentSolution.mils}`;
+      navigator.clipboard.writeText(clipStr).catch(() => {});
+    }
+  }
 
   if (scopeOverlay) {
     scopeOverlay.classList.remove('hidden');

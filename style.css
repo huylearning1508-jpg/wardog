@@ -1784,26 +1784,26 @@ html, body {
   white-space: nowrap;
 }
 
-/* RETICLE BOX WITH 4 CORNERS ┌ ┐ └ ┘ */
+/* RETICLE BOX WITH 4 CORNERS ┌ ┐ └ ┘ (EXACT 1:1 BASELINE: 723px x 539px) */
 .scope-reticle-box {
   position: relative;
-  width: 460px;
-  height: 380px;
+  width: 723px;
+  height: 539px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
-/* CORNER BRACKETS */
+/* CORNER BRACKETS: EXACT ARMS 26px x 20px FOR PERFECT ALIGNMENT */
 .scope-corner {
   position: absolute;
-  width: 20px;
+  width: 26px;
   height: 20px;
   border-color: #4ade80;
   border-style: solid;
   pointer-events: none;
-  filter: drop-shadow(0 0 3px rgba(74, 222, 128, 0.6));
+  filter: drop-shadow(0 0 3px rgba(74, 222, 128, 0.7));
 }
 .sc-tl { top: -2px; left: -2px; border-width: 2.5px 0 0 2.5px; }
 .sc-tr { top: -2px; right: -2px; border-width: 2.5px 2.5px 0 0; }
@@ -1812,35 +1812,35 @@ html, body {
 
 .scope-box-top-scale {
   position: absolute;
-  top: 4px;
-  left: 30px;
-  right: 30px;
-  height: 16px;
+  top: 14px;
+  left: 60px;
+  right: 60px;
+  height: 18px;
   border-bottom: 1px dashed rgba(74, 222, 128, 0.35);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  font-size: 0.62rem;
+  font-size: 0.65rem;
   color: #64748b;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 /* RETICLE INTERIOR */
 .scope-reticle-interior {
   position: relative;
   width: 100%;
-  height: 320px;
+  height: 450px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px;
+  padding: 0 30px;
   box-sizing: border-box;
 }
 
 /* LADDER COLUMNS */
 .scope-ladder-column {
-  width: 90px;
-  height: 280px;
+  width: 120px;
+  height: 440px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1848,7 +1848,7 @@ html, body {
 }
 
 .scope-ladder-header {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   color: #94a3b8;
   letter-spacing: 1px;
@@ -1858,15 +1858,15 @@ html, body {
 .scope-ladder-viewport {
   position: relative;
   width: 100%;
-  height: 250px;
+  height: 400px;
   overflow: hidden;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
 }
 
 .scope-ladder-track {
   position: absolute;
-  top: 125px; /* Centers anchor at vertical middle (50% of 250px) */
+  top: 200px; /* Centers anchor at vertical middle (50% of 400px) */
   left: 0;
   width: 100%;
   height: 0;
@@ -1878,7 +1878,7 @@ html, body {
   position: absolute;
   left: 0;
   width: 100%;
-  height: 26px;
+  height: 28px;
   display: flex;
   align-items: center;
   transform: translateY(-50%);
@@ -1887,16 +1887,16 @@ html, body {
 
 .scope-ladder-left .scope-ladder-row {
   justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
 }
 
 .scope-ladder-right .scope-ladder-row {
   justify-content: flex-start;
-  gap: 6px;
+  gap: 8px;
 }
 
 .scope-ladder-tick {
-  width: 14px;
+  width: 18px;
   height: 2px;
   background: #334155;
   border-radius: 1px;
@@ -1904,7 +1904,7 @@ html, body {
 }
 
 .scope-ladder-val {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #64748b;
   transition: all 0.2s;
@@ -1915,13 +1915,13 @@ html, body {
 .scope-ladder-row.target-locked .scope-ladder-val {
   color: #4ade80;
   font-weight: 900;
-  font-size: 0.88rem;
+  font-size: 0.95rem;
   text-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
 }
 
 .scope-ladder-row.target-locked .scope-ladder-tick {
-  width: 24px;
-  height: 2.5px;
+  width: 28px;
+  height: 3px;
   background: #4ade80;
   box-shadow: 0 0 8px #4ade80;
 }
@@ -1932,8 +1932,8 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 180px;
-  height: 180px;
+  width: 200px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1950,18 +1950,18 @@ html, body {
 .scope-target-guideline-left, .scope-target-guideline-right {
   position: absolute;
   top: 50%;
-  height: 1.5px;
-  background: rgba(74, 222, 128, 0.65);
+  height: 2px;
+  background: rgba(74, 222, 128, 0.7);
   box-shadow: 0 0 8px rgba(74, 222, 128, 0.9);
   transform: translateY(-50%);
 }
 .scope-target-guideline-left {
-  right: 100px;
-  width: 100px;
+  right: 68px;
+  width: 175px;
 }
 .scope-target-guideline-right {
-  left: 100px;
-  width: 100px;
+  left: 68px;
+  width: 175px;
 }
 
 .scope-center-badge {
