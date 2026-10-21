@@ -25,8 +25,18 @@
       </svg>
       <div class="brand-title">
         WARDOGS <span>ARTILLERY</span>
-        <span class="brand-tag">L81 MORTAR</span>
+        <span class="brand-tag" id="weaponBrandTag">L81 MORTAR</span>
       </div>
+    </div>
+
+    <!-- WEAPON SELECTOR -->
+    <div class="weapon-selector" id="weaponSelector">
+      <button class="weapon-btn active" data-weapon="mortar" title="Súng cối L81 (81mm) · Cự ly 80m - 684m">
+        💥 L81 Mortar
+      </button>
+      <button class="weapon-btn" data-weapon="sph2" title="Pháo tự hành SPH-2 (155mm) · Cự ly 780m - 2629m">
+        🚜 SPH-2 Howitzer
+      </button>
     </div>
 
     <!-- 3 MAP SELECTION BUTTONS -->
@@ -70,7 +80,7 @@
     <div id="hud-panel">
       <div class="panel-header">
         <div class="panel-title">
-          <span>🎯 BẢNG BẮN CỐI L81</span>
+          <span id="panelTitleText">🎯 BẢNG BẮN CỐI L81</span>
         </div>
         <div class="panel-controls">
           <button class="icon-btn" id="hudCollapseBtn" title="Thu gọn bảng">✕</button>
@@ -88,12 +98,24 @@
       <div class="panel-content tab-pane" id="pane-solution">
         <!-- BIG HERO CARD: ADJUSTED DISTANCE (COMPENSATED) -->
         <div class="firing-solution-hero">
-          <div class="hero-label">CỰ LY CẦN ĐẶT THƯỚC NGẮM (ĐÃ BÙ ĐỘ CAO)</div>
+          <div class="hero-label" id="heroLabelText">CỰ LY CẦN ĐẶT THƯỚC NGẮM (ĐÃ BÙ ĐỘ CAO)</div>
           <div class="hero-value" id="heroFiringRange">0.0 <span class="hero-unit">m</span></div>
           <div class="hero-sub">
             <span class="hero-pill" id="heroFlatDist">Thực: 0.0 m</span>
             <span class="hero-pill" id="heroDeltaZ">Độ cao: +0.0 m (0m bù)</span>
           </div>
+        </div>
+
+        <!-- SPH-2 ARC SELECTOR (CHỈ HIỆN KHI CHỌN SPH-2) -->
+        <div id="sphArcSelector" class="sph-arc-bar" style="display: none;">
+          <button class="arc-btn active" data-arc="auto">⚡ Tự Động / Cả Hai</button>
+          <button class="arc-btn" data-arc="high">🔥 Góc Bổng (High Arc)</button>
+          <button class="arc-btn" data-arc="low">🎯 Góc Thấp (Low Arc)</button>
+        </div>
+
+        <!-- SPH-2 VEHICLE LEVELING NOTICE -->
+        <div id="sphLevelNotice" class="sph-notice" style="display: none;">
+          <span>⚖️ <strong>Lưu ý SPH-2:</strong> Hãy đỗ xe thăng bằng (STABILIZED) trên mặt phẳng để tránh lệch đạn do độ nghiêng xe.</span>
         </div>
 
         <!-- 2x2 SOLUTION METRICS -->
@@ -152,12 +174,12 @@
           </div>
           <div class="input-row">
             <div class="coord-field">
-              <label>Tọa độ X (VD: -80.07)</label>
-              <input type="text" id="inputGunX" placeholder="-80.07">
+              <label>Tọa độ X (VD: 79.60)</label>
+              <input type="text" id="inputGunX" placeholder="79.60">
             </div>
             <div class="coord-field">
-              <label>Tọa độ Y (VD: -114.30)</label>
-              <input type="text" id="inputGunY" placeholder="-114.30">
+              <label>Tọa độ Y (VD: 91.67)</label>
+              <input type="text" id="inputGunY" placeholder="91.67">
             </div>
           </div>
         </div>
@@ -168,18 +190,18 @@
           </div>
           <div class="input-row">
             <div class="coord-field">
-              <label>Tọa độ X (VD: -79.56)</label>
-              <input type="text" id="inputTargetX" placeholder="-79.56">
+              <label>Tọa độ X (VD: 81.60)</label>
+              <input type="text" id="inputTargetX" placeholder="81.60">
             </div>
             <div class="coord-field">
-              <label>Tọa độ Y (VD: -114.48)</label>
-              <input type="text" id="inputTargetY" placeholder="-114.48">
+              <label>Tọa độ Y (VD: 93.67)</label>
+              <input type="text" id="inputTargetY" placeholder="93.67">
             </div>
           </div>
         </div>
 
         <div style="font-size:0.72rem; color:var(--text-muted); line-height: 1.4; padding: 0 4px;">
-          💡 Hỗ trợ nhập tọa độ dạng game (VD: <code>-79.56</code> hoặc <code>x-79.56</code>) hoặc mét thực (VD: <code>-7956</code>).
+          💡 Gốc tọa độ (0, 0) ở góc dưới cùng bên trái bản đồ. Hỗ trợ nhập tọa độ dạng game (VD: <code>79.60</code> hoặc <code>x79.60</code>) hoặc mét thực (VD: <code>7960</code>).
         </div>
 
         <button class="btn-primary" id="applyCoordsBtn">
@@ -207,7 +229,7 @@
     <!-- GUNNER SIGHT IN-GAME SIMULATION (BOTTOM RIGHT HUD) -->
     <div id="gunner-sight-box">
       <div class="gunner-header">
-        <span class="gunner-title">GUNNER SIGHT</span>
+        <span class="gunner-title" id="gunnerTitle">GUNNER SIGHT</span>
         <div class="gunner-controls">
           <button class="gunner-icon-btn" id="gunnerMinBtn" title="Thu gọn / Mở rộng">⤢</button>
         </div>
@@ -224,8 +246,8 @@
           <span class="tape-label tape-right">MIL</span>
         </div>
 
-        <!-- CENTER SIGHT & LADDERS (RETICLE & NEEDLES FIXED IN CENTER, LADDER MOVES UP/DOWN) -->
-        <div class="gunner-center-stage">
+        <!-- MORTAR CENTER SIGHT & LADDERS (RETICLE & NEEDLES FIXED IN CENTER, LADDER MOVES UP/DOWN) -->
+        <div class="gunner-center-stage" id="mortarSightStage">
           <!-- LEFT: RANGE LADDER (SCROLLING TAPE) -->
           <div class="gunner-ladder-viewport ladder-left-viewport">
             <div class="ladder-track" id="ladderLeftTrack"></div>
@@ -254,6 +276,46 @@
           <!-- RIGHT: MIL LADDER (SCROLLING TAPE) -->
           <div class="gunner-ladder-viewport ladder-right-viewport">
             <div class="ladder-track" id="ladderRightTrack"></div>
+          </div>
+        </div>
+
+        <!-- SPH-2 ARTILLERY COMPUTER DISPLAY STAGE -->
+        <div class="sph-gunner-stage" id="sphGunnerStage" style="display: none;">
+          <div class="sph-comp-header">
+            <span class="sph-sys-tag">SPH-2 F.C.S.</span>
+            <span class="sph-status-tag" id="sphStabStatus">● STABILIZED</span>
+          </div>
+
+          <div class="sph-dual-solutions">
+            <div class="sph-sol-col highlight-high">
+              <div class="sph-sol-title">GÓC BỔNG (HIGH)</div>
+              <div class="sph-sol-mil" id="sphSightHighMil">--- MIL</div>
+              <div class="sph-sol-deg" id="sphSightHighDeg">---° nâng nòng</div>
+            </div>
+            <div class="sph-sol-col highlight-low">
+              <div class="sph-sol-title">GÓC THẤP (LOW)</div>
+              <div class="sph-sol-mil" id="sphSightLowMil">--- MIL</div>
+              <div class="sph-sol-deg" id="sphSightLowDeg">---° nâng nòng</div>
+            </div>
+          </div>
+
+          <div class="sph-reticle-box">
+            <svg class="sph-reticle-svg" viewBox="0 0 160 70">
+              <!-- Artificial horizon line -->
+              <line x1="15" y1="35" x2="60" y2="35" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="2 2"/>
+              <line x1="100" y1="35" x2="145" y2="35" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="2 2"/>
+              <line x1="60" y1="31" x2="60" y2="39" stroke="#38bdf8" stroke-width="1.5" />
+              <line x1="100" y1="31" x2="100" y2="39" stroke="#38bdf8" stroke-width="1.5" />
+              <!-- Center crosshairs -->
+              <line x1="80" y1="21" x2="80" y2="31" stroke="#38bdf8" stroke-width="1.5" />
+              <line x1="80" y1="39" x2="80" y2="49" stroke="#38bdf8" stroke-width="1.5" />
+              <line x1="70" y1="35" x2="90" y2="35" stroke="#38bdf8" stroke-width="1.5" />
+              <circle cx="80" cy="35" r="3" fill="none" stroke="#38bdf8" stroke-width="1.2" />
+              <!-- Level indicators -->
+              <circle cx="35" cy="35" r="2" fill="#38bdf8" />
+              <circle cx="125" cy="35" r="2" fill="#38bdf8" />
+            </svg>
+            <div class="sph-level-text">LEVEL: 0.0° · TILT STABLE · HORIZON LOCK</div>
           </div>
         </div>
 
@@ -288,45 +350,30 @@
       <div class="modal-header">
         <div class="modal-title">
           <span class="modal-icon">📊</span>
-          <span>L81 MORTAR RANGE LADDER (THƯỚC NGẮM & BẢNG BẮN CỐI)</span>
+          <span id="ladderModalTitle">BẢNG TRA THƯỚC NGẮM (RANGE LADDER)</span>
         </div>
         <button class="modal-close-btn" id="closeLadderModalBtn" title="Đóng bảng">✕</button>
       </div>
 
-      <div class="modal-summary">
-        <div class="summary-pill">
-          <span class="pill-k">CỰ LY BẮN HIỆU QUẢ</span>
-          <span class="pill-v">80 m — 684 m</span>
-        </div>
-        <div class="summary-pill">
-          <span class="pill-k">THƯỚC NGẮM (ELEVATION)</span>
-          <span class="pill-v">950 MIL → 150 MIL</span>
-        </div>
-        <div class="summary-pill">
-          <span class="pill-k">TỶ LỆ BÙ CAO ĐỘ (SLOPE)</span>
-          <span class="pill-v">ΔD ≈ +0.532 × ΔZ</span>
-        </div>
-        <div class="summary-pill">
-          <span class="pill-k">THỜI GIAN BAY (ToF)</span>
-          <span class="pill-v">12.2 s — 24.2 s</span>
-        </div>
+      <!-- MODAL WEAPON TABS -->
+      <div class="modal-weapon-switch">
+        <button class="modal-w-btn active" data-wmodal="mortar">💥 Bảng Cối L81 (80m - 684m)</button>
+        <button class="modal-w-btn" data-wmodal="sph2">🚜 Bảng Pháo SPH-2 (780m - 2629m)</button>
+      </div>
+
+      <div class="modal-summary" id="ladderModalSummary">
+        <!-- Rendered by JS based on selected weapon -->
       </div>
 
       <div class="modal-filter-bar">
-        <input type="text" id="ladderSearchInput" placeholder="🔍 Tìm cự ly hoặc số MIL (ví dụ: 176, 340, 810)..." />
-        <span class="ladder-hint">💡 Quy tắc ngắm: Cự ly càng gần thì số MIL càng lớn (nâng nòng dốc). Cự ly xa số MIL càng nhỏ.</span>
+        <input type="text" id="ladderSearchInput" placeholder="🔍 Tìm cự ly hoặc số MIL (ví dụ: 176, 340, 810, 1500, 2200)..." />
+        <span class="ladder-hint" id="ladderHint">💡 Quy tắc ngắm: Cự ly càng gần thì số MIL càng lớn (nâng nòng dốc). Cự ly xa số MIL càng nhỏ.</span>
       </div>
 
       <div class="modal-table-container">
         <table class="ladder-table">
-          <thead>
-            <tr>
-              <th>CỰ LY (M)</th>
-              <th>THƯỚC NGẮM (MIL)</th>
-              <th>THỜI GIAN BAY (ToF)</th>
-              <th>GÓC TÀ LA BÀN</th>
-              <th>ĐẶC ĐIỂM QUỸ ĐẠO</th>
-            </tr>
+          <thead id="ladderTableHead">
+            <!-- Rendered by JS -->
           </thead>
           <tbody id="ladderTableBody">
             <!-- Rendered by JS -->
